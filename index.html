@@ -3,116 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 3.0</title>
+    <title>Super Oído 4.0</title>
+    <link rel="manifest" href="manifest.json">
     <style>
         body { 
             font-family: 'Segoe UI', sans-serif; 
             text-align: center; 
             background-color: #121212; 
             color: #e0e0e0; 
-            padding: 20px;
+            padding: 15px;
             margin: 0;
-            overscroll-behavior: none; /* Evita rebote en móviles */
+            overscroll-behavior: none; 
+            user-select: none; /* Evita seleccionar texto al tocar */
         }
-        h1 { color: #00d2ff; margin: 10px 0; font-size: 22px; text-transform: uppercase; letter-spacing: 2px;}
+        h1 { color: #00d2ff; margin: 5px 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;}
 
-        /* Botón de Encendido Estilo "Neon" */
+        /* BOTONERA DE MODOS (NUEVO) */
+        .preset-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .preset-btn {
+            background: #333;
+            border: 1px solid #444;
+            color: #aaa;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preset-btn.active {
+            background: #00d2ff;
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+            border-color: #fff;
+        }
+
+        /* Botón de Encendido */
         #btnPower {
-            width: 100px; height: 100px; 
+            width: 90px; height: 90px; 
             border-radius: 50%; border: 3px solid #333;
             background: #1e1e1e; color: #555; 
-            font-size: 16px; font-weight: bold; cursor: pointer;
-            box-shadow: inset 0 0 20px #000;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            margin: 20px auto;
+            font-size: 14px; font-weight: bold; cursor: pointer;
+            box-shadow: inset 0 0 15px #000;
+            transition: all 0.3s;
+            margin: 10px auto 20px auto;
             display: flex; align-items: center; justify-content: center;
         }
-        
         #btnPower.on {
             background: #00d2ff; color: #000;
             border-color: #fff;
-            box-shadow: 0 0 30px #00d2ff, inset 0 0 10px #fff;
-            transform: scale(1.1);
+            box-shadow: 0 0 25px #00d2ff;
+            transform: scale(1.05);
         }
 
-        /* Panel de Controles */
+        /* Paneles */
         .panel {
             background: #1e1e1e;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        .label-group { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 5px; color: #aaa;}
+        .label-group { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #888;}
         .label-val { color: #00d2ff; font-weight: bold;}
 
-        /* Estilo de los Sliders */
+        /* Sliders */
         input[type=range] {
-            width: 100%; height: 8px; border-radius: 5px;
-            background: #333; outline: none; -webkit-appearance: none;
-            margin-bottom: 15px;
+            width: 100%; height: 6px; border-radius: 5px;
+            background: #333; outline: none; -webkit-appearance: none; margin-bottom: 10px;
         }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none;
-            width: 20px; height: 20px; border-radius: 50%;
-            background: #00d2ff; cursor: pointer;
-            box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+            background: #00d2ff; cursor: pointer; box-shadow: 0 0 8px rgba(0,210,255,0.5);
         }
         
-        /* Colores específicos para cada banda */
-        .bass-slider::-webkit-slider-thumb { background: #ff4757; box-shadow: 0 0 10px rgba(255, 71, 87, 0.5); }
-        .mid-slider::-webkit-slider-thumb { background: #ffa502; box-shadow: 0 0 10px rgba(255, 165, 2, 0.5); }
-        .treble-slider::-webkit-slider-thumb { background: #2ed573; box-shadow: 0 0 10px rgba(46, 213, 115, 0.5); }
+        .bass-slider::-webkit-slider-thumb { background: #ff4757; }
+        .mid-slider::-webkit-slider-thumb { background: #ffa502; }
+        .treble-slider::-webkit-slider-thumb { background: #2ed573; }
 
     </style>
 </head>
 <body>
 
-    <h1>Super Oído 3.0</h1>
-    <div style="font-size: 0.8em; color: #666;">Ecualizador Pro</div>
+    <h1>Super Oído 4.0</h1>
+    
+    <div class="preset-container">
+        <button class="preset-btn active" onclick="loadPreset('general')">General</button>
+        <button class="preset-btn" onclick="loadPreset('voz')">🗣️ Voz</button>
+        <button class="preset-btn" onclick="loadPreset('cine')">🎬 Cine</button>
+        <button class="preset-btn" onclick="loadPreset('calle')">🚦 Calle</button>
+    </div>
 
     <div id="btnPower">OFF</div>
 
     <div class="panel">
-        <div class="label-group">
-            <span>Volumen Maestro</span>
-            <span class="label-val" id="volVal">1.0x</span>
-        </div>
+        <div class="label-group"><span>Volumen</span><span class="label-val" id="volVal">1.0x</span></div>
         <input type="range" id="volControl" min="1" max="30" step="0.5" value="1">
     </div>
 
     <div class="panel">
-        <div class="label-group">
-            <span>Bajos (Cuerpo)</span>
-            <span class="label-val" id="bassVal">0 dB</span>
-        </div>
+        <div class="label-group"><span>Bajos</span><span class="label-val" id="bassVal">0 dB</span></div>
         <input type="range" class="bass-slider" id="bassControl" min="-20" max="20" step="1" value="0">
 
-        <div class="label-group">
-            <span>Medios (Voz)</span>
-            <span class="label-val" id="midVal">0 dB</span>
-        </div>
+        <div class="label-group"><span>Medios</span><span class="label-val" id="midVal">0 dB</span></div>
         <input type="range" class="mid-slider" id="midControl" min="-20" max="20" step="1" value="0">
 
-        <div class="label-group">
-            <span>Agudos (Claridad)</span>
-            <span class="label-val" id="trebleVal">0 dB</span>
-        </div>
-        <input type="range" class="treble-slider" id="trebleControl" min="-20" max="20" step="1" value="10">
+        <div class="label-group"><span>Agudos</span><span class="label-val" id="trebleVal">0 dB</span></div>
+        <input type="range" class="treble-slider" id="trebleControl" min="-20" max="20" step="1" value="0">
     </div>
 
     <script>
-        let ctx;
-        let source;
-        let gainNode;
-        // Filtros del Ecualizador
+        let ctx, source, gainNode;
         let bassFilter, midFilter, trebleFilter;
         let isOn = false;
 
+        // --- DEFINICIÓN DE PERFILES (Aquí está la magia) ---
+        const PRESETS = {
+            'general': { vol: 2, bass: 0, mid: 0, treble: 0 },
+            'voz':     { vol: 5, bass: -10, mid: 8, treble: 5 },  // Quita graves, resalta voz
+            'cine':    { vol: 4, bass: 8, mid: 0, treble: 8 },    // Forma de "V" (Graves y Agudos)
+            'calle':   { vol: 6, bass: -15, mid: 5, treble: 12 }  // Elimina ruido motor, alerta máxima
+        };
+
         const btn = document.getElementById('btnPower');
-        
-        // Elementos UI
         const ui = {
             vol: { input: document.getElementById('volControl'), label: document.getElementById('volVal') },
             bass: { input: document.getElementById('bassControl'), label: document.getElementById('bassVal') },
@@ -120,61 +139,90 @@
             treble: { input: document.getElementById('trebleControl'), label: document.getElementById('trebleVal') }
         };
 
+        // --- CARGAR MEMORIA ---
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('superOido4_Settings');
+            if (saved) {
+                const config = JSON.parse(saved);
+                applyConfigToUI(config);
+                // Si guardamos qué botón estaba activo
+                if(config.lastPreset) highlightButton(config.lastPreset);
+            }
+        });
+
+        // --- FUNCIÓN PARA CARGAR PRESETS ---
+        function loadPreset(name) {
+            const p = PRESETS[name];
+            if (p) {
+                // Aplicar valores a los sliders
+                ui.vol.input.value = p.vol;
+                ui.bass.input.value = p.bass;
+                ui.mid.input.value = p.mid;
+                ui.treble.input.value = p.treble;
+                
+                // Actualizar audio y textos
+                updateAudioSystem();
+                
+                // Efecto visual en botones
+                highlightButton(name);
+                
+                // Guardar
+                saveToMemory(name);
+            }
+        }
+
+        function highlightButton(name) {
+            // Quitar clase 'active' a todos
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            // Buscar el botón clicado y activarlo (buscando por texto o onclick es complejo, usaremos el índice simple)
+            // Truco: buscamos el botón que tenga el onclick con ese nombre
+            const buttons = document.querySelectorAll('.preset-btn');
+            if(name === 'general') buttons[0].classList.add('active');
+            if(name === 'voz') buttons[1].classList.add('active');
+            if(name === 'cine') buttons[2].classList.add('active');
+            if(name === 'calle') buttons[3].classList.add('active');
+        }
+
+        function saveToMemory(presetName) {
+            const config = {
+                vol: ui.vol.input.value,
+                bass: ui.bass.input.value,
+                mid: ui.mid.input.value,
+                treble: ui.treble.input.value,
+                lastPreset: presetName || 'custom'
+            };
+            localStorage.setItem('superOido4_Settings', JSON.stringify(config));
+        }
+
+        // --- AUDIO ENGINE ---
         btn.addEventListener('click', async () => {
             if (!isOn) {
                 try {
-                    // 1. Iniciar Contexto
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     ctx = new AudioContext({ latencyHint: 'interactive', sampleRate: 48000 });
-
-                    // 2. Micrófono (Crudo)
+                    
                     const stream = await navigator.mediaDevices.getUserMedia({
-                        audio: {
-                            echoCancellation: false,
-                            noiseSuppression: false,
-                            autoGainControl: false,
-                            latency: 0
-                        }
+                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, latency: 0 }
                     });
 
-                    // 3. Crear Nodos
                     source = ctx.createMediaStreamSource(stream);
                     gainNode = ctx.createGain();
                     
-                    // --- CREACIÓN DEL ECUALIZADOR ---
-                    
-                    // Bajos (LowShelf): Afecta todo lo que esté debajo de 250Hz
-                    bassFilter = ctx.createBiquadFilter();
-                    bassFilter.type = "lowshelf";
-                    bassFilter.frequency.value = 250; 
+                    bassFilter = ctx.createBiquadFilter(); bassFilter.type = "lowshelf"; bassFilter.frequency.value = 250; 
+                    midFilter = ctx.createBiquadFilter(); midFilter.type = "peaking"; midFilter.frequency.value = 1500; midFilter.Q.value = 1;
+                    trebleFilter = ctx.createBiquadFilter(); trebleFilter.type = "highshelf"; trebleFilter.frequency.value = 3000;
 
-                    // Medios (Peaking): Afecta la zona de la voz (alrededor de 1500Hz)
-                    midFilter = ctx.createBiquadFilter();
-                    midFilter.type = "peaking";
-                    midFilter.frequency.value = 1500;
-                    midFilter.Q.value = 1; // Ancho de banda de la curva
-
-                    // Agudos (HighShelf): Afecta todo lo que esté por encima de 3000Hz
-                    trebleFilter = ctx.createBiquadFilter();
-                    trebleFilter.type = "highshelf";
-                    trebleFilter.frequency.value = 3000;
-
-                    // 4. Conectar la cadena (El tren de audio)
-                    // Mic -> Bajos -> Medios -> Agudos -> Volumen -> Salida
                     source.connect(bassFilter);
                     bassFilter.connect(midFilter);
                     midFilter.connect(trebleFilter);
                     trebleFilter.connect(gainNode);
                     gainNode.connect(ctx.destination);
 
-                    // 5. Aplicar valores actuales de los sliders
-                    updateAudioValues();
+                    updateAudioSystem();
 
-                    // UI ON
                     isOn = true;
                     btn.innerText = "ON";
                     btn.classList.add('on');
-
                 } catch (e) { alert("Error: " + e.message); }
             } else {
                 if (ctx) ctx.close();
@@ -184,15 +232,14 @@
             }
         });
 
-        // Función para actualizar valores en tiempo real
-        function updateAudioValues() {
-            // Actualizar etiquetas de texto
+        function updateAudioSystem() {
+            // Actualizar Textos
             ui.vol.label.innerText = ui.vol.input.value + "x";
             ui.bass.label.innerText = (ui.bass.input.value > 0 ? "+" : "") + ui.bass.input.value + " dB";
             ui.mid.label.innerText = (ui.mid.input.value > 0 ? "+" : "") + ui.mid.input.value + " dB";
             ui.treble.label.innerText = (ui.treble.input.value > 0 ? "+" : "") + ui.treble.input.value + " dB";
 
-            // Si el audio está encendido, aplicar al sonido
+            // Actualizar Audio Real
             if (isOn && gainNode) {
                 gainNode.gain.value = ui.vol.input.value;
                 bassFilter.gain.value = ui.bass.input.value;
@@ -200,12 +247,24 @@
                 trebleFilter.gain.value = ui.treble.input.value;
             }
         }
+        
+        function applyConfigToUI(config) {
+            ui.vol.input.value = config.vol;
+            ui.bass.input.value = config.bass;
+            ui.mid.input.value = config.mid;
+            ui.treble.input.value = config.treble;
+            updateAudioSystem();
+        }
 
-        // Escuchar cambios en los sliders
+        // Detectar cambios manuales en los sliders
         Object.values(ui).forEach(control => {
-            control.input.addEventListener('input', updateAudioValues);
+            control.input.addEventListener('input', () => {
+                updateAudioSystem();
+                // Si mueves un slider manualmente, quitamos el brillo del botón preset
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                saveToMemory(null); // Guardar como "custom"
+            });
         });
-
     </script>
 </body>
 </html>
