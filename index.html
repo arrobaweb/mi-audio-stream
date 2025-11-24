@@ -3,135 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído</title>
+    <title>Super Oído 3.0</title>
     <style>
         body { 
-            font-family: Arial, sans-serif; 
+            font-family: 'Segoe UI', sans-serif; 
             text-align: center; 
             background-color: #121212; 
-            color: white; 
-            padding-top: 50px;
+            color: #e0e0e0; 
+            padding: 20px;
             margin: 0;
-            overflow: hidden; /* Evitar scroll */
+            overscroll-behavior: none; /* Evita rebote en móviles */
         }
-        h1 { color: #00d2ff; margin-bottom: 5px; font-size: 24px;}
-        p { color: #888; margin-bottom: 40px; font-size: 14px;}
+        h1 { color: #00d2ff; margin: 10px 0; font-size: 22px; text-transform: uppercase; letter-spacing: 2px;}
 
-        /* Botón gigante */
+        /* Botón de Encendido Estilo "Neon" */
         #btnPower {
-            width: 140px; height: 140px; 
-            border-radius: 50%; border: 4px solid #333;
-            background-color: #1e1e1e; color: #555; 
-            font-size: 20px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: all 0.2s ease;
-            margin-bottom: 30px;
+            width: 100px; height: 100px; 
+            border-radius: 50%; border: 3px solid #333;
+            background: #1e1e1e; color: #555; 
+            font-size: 16px; font-weight: bold; cursor: pointer;
+            box-shadow: inset 0 0 20px #000;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin: 20px auto;
+            display: flex; align-items: center; justify-content: center;
         }
         
         #btnPower.on {
-            background-color: #00d2ff; color: #000;
+            background: #00d2ff; color: #000;
             border-color: #fff;
-            box-shadow: 0 0 40px #00d2ff;
+            box-shadow: 0 0 30px #00d2ff, inset 0 0 10px #fff;
+            transform: scale(1.1);
         }
 
-        .controls { 
-            background: #222; 
-            padding: 20px; 
-            border-radius: 20px 20px 0 0; 
-            position: fixed; bottom: 0; left: 0; right: 0;
+        /* Panel de Controles */
+        .panel {
+            background: #1e1e1e;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        
-        label { display: block; font-size: 1.2rem; margin-bottom: 15px; color: #fff;}
-        
-        /* Slider Estilizado */
+
+        .label-group { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 5px; color: #aaa;}
+        .label-val { color: #00d2ff; font-weight: bold;}
+
+        /* Estilo de los Sliders */
         input[type=range] {
-            width: 100%; height: 15px; border-radius: 10px;
-            background: #444; outline: none; accent-color: #00d2ff;
+            width: 100%; height: 8px; border-radius: 5px;
+            background: #333; outline: none; -webkit-appearance: none;
+            margin-bottom: 15px;
         }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: #00d2ff; cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        }
+        
+        /* Colores específicos para cada banda */
+        .bass-slider::-webkit-slider-thumb { background: #ff4757; box-shadow: 0 0 10px rgba(255, 71, 87, 0.5); }
+        .mid-slider::-webkit-slider-thumb { background: #ffa502; box-shadow: 0 0 10px rgba(255, 165, 2, 0.5); }
+        .treble-slider::-webkit-slider-thumb { background: #2ed573; box-shadow: 0 0 10px rgba(46, 213, 115, 0.5); }
+
     </style>
 </head>
 <body>
 
-    <h1>Super Oído 2.0</h1>
-    <p>Calidad HD + Filtro Claridad</p>
+    <h1>Super Oído 3.0</h1>
+    <div style="font-size: 0.8em; color: #666;">Ecualizador Pro</div>
 
-    <button id="btnPower">OFF</button>
+    <div id="btnPower">OFF</div>
 
-    <div class="controls">
-        <label>Ganancia: <span id="volText">1.0</span>x</label>
+    <div class="panel">
+        <div class="label-group">
+            <span>Volumen Maestro</span>
+            <span class="label-val" id="volVal">1.0x</span>
+        </div>
         <input type="range" id="volControl" min="1" max="30" step="0.5" value="1">
     </div>
 
+    <div class="panel">
+        <div class="label-group">
+            <span>Bajos (Cuerpo)</span>
+            <span class="label-val" id="bassVal">0 dB</span>
+        </div>
+        <input type="range" class="bass-slider" id="bassControl" min="-20" max="20" step="1" value="0">
+
+        <div class="label-group">
+            <span>Medios (Voz)</span>
+            <span class="label-val" id="midVal">0 dB</span>
+        </div>
+        <input type="range" class="mid-slider" id="midControl" min="-20" max="20" step="1" value="0">
+
+        <div class="label-group">
+            <span>Agudos (Claridad)</span>
+            <span class="label-val" id="trebleVal">0 dB</span>
+        </div>
+        <input type="range" class="treble-slider" id="trebleControl" min="-20" max="20" step="1" value="10">
+    </div>
+
     <script>
-        let audioContext;
-        let micSource;
+        let ctx;
+        let source;
         let gainNode;
-        let trebleFilter;
+        // Filtros del Ecualizador
+        let bassFilter, midFilter, trebleFilter;
         let isOn = false;
 
         const btn = document.getElementById('btnPower');
-        const volSlider = document.getElementById('volControl');
-        const volText = document.getElementById('volText');
+        
+        // Elementos UI
+        const ui = {
+            vol: { input: document.getElementById('volControl'), label: document.getElementById('volVal') },
+            bass: { input: document.getElementById('bassControl'), label: document.getElementById('bassVal') },
+            mid: { input: document.getElementById('midControl'), label: document.getElementById('midVal') },
+            treble: { input: document.getElementById('trebleControl'), label: document.getElementById('trebleVal') }
+        };
 
         btn.addEventListener('click', async () => {
             if (!isOn) {
                 try {
-                    // 1. Configuración de Alta Fidelidad
+                    // 1. Iniciar Contexto
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    audioContext = new AudioContext({ 
-                        latencyHint: 'interactive',
-                        sampleRate: 48000 // Forzar calidad HD
-                    });
+                    ctx = new AudioContext({ latencyHint: 'interactive', sampleRate: 48000 });
 
-                    // 2. Pedir micrófono SIN PROCESAMIENTO (Audio crudo)
+                    // 2. Micrófono (Crudo)
                     const stream = await navigator.mediaDevices.getUserMedia({
                         audio: {
-                            echoCancellation: false, // Vital para evitar sonido de caja
-                            noiseSuppression: false, // Vital para evitar sonido de caja
-                            autoGainControl: false,  // Controlamos volumen nosotros
-                            channelCount: 1          // Mono (mejor para voz)
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false,
+                            latency: 0
                         }
                     });
 
                     // 3. Crear Nodos
-                    micSource = audioContext.createMediaStreamSource(stream);
-                    gainNode = audioContext.createGain();
+                    source = ctx.createMediaStreamSource(stream);
+                    gainNode = ctx.createGain();
                     
-                    // --- FILTRO ANTI-CAJA (Realce de Agudos) ---
-                    trebleFilter = audioContext.createBiquadFilter();
-                    trebleFilter.type = "highshelf"; // Filtro de estante alto
-                    trebleFilter.frequency.value = 2500; // A partir de 2500Hz
-                    trebleFilter.gain.value = 10; // Subir 10 decibeles los agudos (Claridad)
+                    // --- CREACIÓN DEL ECUALIZADOR ---
+                    
+                    // Bajos (LowShelf): Afecta todo lo que esté debajo de 250Hz
+                    bassFilter = ctx.createBiquadFilter();
+                    bassFilter.type = "lowshelf";
+                    bassFilter.frequency.value = 250; 
 
-                    // 4. Conectar cables: Mic -> Filtro -> Volumen -> Salida
-                    micSource.connect(trebleFilter);
+                    // Medios (Peaking): Afecta la zona de la voz (alrededor de 1500Hz)
+                    midFilter = ctx.createBiquadFilter();
+                    midFilter.type = "peaking";
+                    midFilter.frequency.value = 1500;
+                    midFilter.Q.value = 1; // Ancho de banda de la curva
+
+                    // Agudos (HighShelf): Afecta todo lo que esté por encima de 3000Hz
+                    trebleFilter = ctx.createBiquadFilter();
+                    trebleFilter.type = "highshelf";
+                    trebleFilter.frequency.value = 3000;
+
+                    // 4. Conectar la cadena (El tren de audio)
+                    // Mic -> Bajos -> Medios -> Agudos -> Volumen -> Salida
+                    source.connect(bassFilter);
+                    bassFilter.connect(midFilter);
+                    midFilter.connect(trebleFilter);
                     trebleFilter.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
+                    gainNode.connect(ctx.destination);
 
-                    // Actualizar UI
+                    // 5. Aplicar valores actuales de los sliders
+                    updateAudioValues();
+
+                    // UI ON
                     isOn = true;
                     btn.innerText = "ON";
                     btn.classList.add('on');
 
-                    // Aplicar volumen inicial del slider
-                    gainNode.gain.value = volSlider.value;
-                    
-                } catch (error) {
-                    alert("Error: " + error.message);
-                }
+                } catch (e) { alert("Error: " + e.message); }
             } else {
-                if (audioContext) audioContext.close();
+                if (ctx) ctx.close();
                 isOn = false;
                 btn.innerText = "OFF";
                 btn.classList.remove('on');
             }
         });
 
-        volSlider.addEventListener('input', (e) => {
-            const val = e.target.value;
-            volText.innerText = val;
-            if (gainNode) gainNode.gain.value = val;
+        // Función para actualizar valores en tiempo real
+        function updateAudioValues() {
+            // Actualizar etiquetas de texto
+            ui.vol.label.innerText = ui.vol.input.value + "x";
+            ui.bass.label.innerText = (ui.bass.input.value > 0 ? "+" : "") + ui.bass.input.value + " dB";
+            ui.mid.label.innerText = (ui.mid.input.value > 0 ? "+" : "") + ui.mid.input.value + " dB";
+            ui.treble.label.innerText = (ui.treble.input.value > 0 ? "+" : "") + ui.treble.input.value + " dB";
+
+            // Si el audio está encendido, aplicar al sonido
+            if (isOn && gainNode) {
+                gainNode.gain.value = ui.vol.input.value;
+                bassFilter.gain.value = ui.bass.input.value;
+                midFilter.gain.value = ui.mid.input.value;
+                trebleFilter.gain.value = ui.treble.input.value;
+            }
+        }
+
+        // Escuchar cambios en los sliders
+        Object.values(ui).forEach(control => {
+            control.input.addEventListener('input', updateAudioValues);
         });
+
     </script>
 </body>
 </html>
