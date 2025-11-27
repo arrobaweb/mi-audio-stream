@@ -3,111 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 6.1</title>
+    <title>Super Oído 6.2 (Debug)</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { 
-            font-family: 'Segoe UI', sans-serif; 
-            text-align: center; background-color: #121212; color: #e0e0e0; 
-            padding: 15px; margin: 0; overscroll-behavior: none; user-select: none;
-            padding-bottom: 50px;
+            font-family: 'Segoe UI', sans-serif; text-align: center; 
+            background-color: #000; color: #fff; /* Fondo negro puro para contraste */
+            padding: 15px; margin: 0; user-select: none; padding-bottom: 50px;
         }
-        h1 { color: #00d2ff; margin: 5px 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;}
+        h1 { color: #00ff00; margin: 5px 0; font-size: 20px; }
 
-        /* LED INDICATOR */
+        /* ZONA DE DIAGNÓSTICO */
+        .debug-zone {
+            background: #222; border: 1px solid #444; padding: 10px;
+            margin-bottom: 15px; border-radius: 8px; font-family: monospace;
+        }
         .led-container {
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            margin-bottom: 15px; font-size: 12px; color: #666; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; gap: 15px;
+            font-size: 14px; font-weight: bold;
         }
         .led {
-            width: 15px; height: 15px; border-radius: 50%;
-            background-color: #222; border: 2px solid #444;
-            transition: all 0.05s; /* Reacción rápida */
+            width: 20px; height: 20px; border-radius: 50%;
+            background-color: #333; border: 2px solid #555;
         }
-        /* Cuando se activa el compresor se pone ROJO */
-        .led.active { background-color: #ff3333; box-shadow: 0 0 15px #ff0000; border-color: #fff;}
+        .led.active { background-color: #ff0000; box-shadow: 0 0 20px #ff0000; border-color: #fff;}
+        
+        #dbValue { color: #ffeb3b; font-size: 1.2em; }
 
-        /* BOTONERA */
+        /* EL RESTO IGUAL */
         .preset-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .preset-btn {
-            background: #333; border: 1px solid #444; color: #aaa; padding: 10px;
-            border-radius: 10px; font-size: 14px; cursor: pointer; transition: all 0.2s;
-        }
-        .preset-btn.active {
-            background: #00d2ff; color: #000; font-weight: bold;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); border-color: #fff;
-        }
+        .preset-btn { background: #333; border: 1px solid #444; color: #aaa; padding: 10px; border-radius: 10px; cursor: pointer; }
+        .preset-btn.active { background: #00d2ff; color: #000; font-weight: bold; }
 
-        /* POWER BTN */
         #btnPower {
             width: 90px; height: 90px; border-radius: 50%; border: 3px solid #333;
-            background: #1e1e1e; color: #555; font-size: 14px; font-weight: bold; cursor: pointer;
-            box-shadow: inset 0 0 15px #000; transition: all 0.3s;
-            margin: 10px auto 20px auto; display: flex; align-items: center; justify-content: center;
+            background: #1e1e1e; color: #555; font-weight: bold; cursor: pointer;
+            margin: 10px auto; display: flex; align-items: center; justify-content: center;
         }
-        #btnPower.on {
-            background: #00d2ff; color: #000; border-color: #fff;
-            box-shadow: 0 0 25px #00d2ff; transform: scale(1.05);
-        }
+        #btnPower.on { background: #00d2ff; color: #000; box-shadow: 0 0 25px #00d2ff; }
 
-        /* PANELS & SLIDERS */
-        .panel { background: #1e1e1e; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .label-group { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #888;}
-        .label-val { color: #00d2ff; font-weight: bold;}
-        
-        input[type=range] { width: 100%; height: 6px; border-radius: 5px; background: #333; outline: none; -webkit-appearance: none; margin-bottom: 10px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #00d2ff; cursor: pointer; box-shadow: 0 0 8px rgba(0,210,255,0.5); }
-        .bass-slider::-webkit-slider-thumb { background: #ff4757; }
-        .mid-slider::-webkit-slider-thumb { background: #ffa502; }
-        .treble-slider::-webkit-slider-thumb { background: #2ed573; }
-
-        .switch-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; }
-        .switch-label { font-size: 0.9rem; color: #aaa; }
-        input[type=checkbox] { transform: scale(1.2); accent-color: #00d2ff; }
+        .panel { background: #1a1a1a; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
+        input[type=range] { width: 100%; margin-bottom: 10px; }
+        .label-group { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; margin-bottom:5px;}
+        .label-val { color: #00d2ff; }
     </style>
 </head>
 <body>
 
-    <h1>Super Oído 6.1</h1>
-    
-    <div class="led-container">
-        <div class="led" id="compLed"></div>
-        <span id="compStatus">Protección Auditiva: LISTA</span>
+    <h1>Super Oído 6.2</h1>
+    <div style="color: #666; font-size: 10px;">Modo Alta Sensibilidad</div>
+
+    <div class="debug-zone">
+        <div class="led-container">
+            <div class="led" id="compLed"></div>
+            <span>Reducción: <span id="dbValue">0.00</span> dB</span>
+        </div>
+        <div style="font-size: 10px; color: #aaa; margin-top:5px;">
+            Si el número cambia, funciona.
+        </div>
     </div>
-    
+
     <div class="preset-container">
         <button class="preset-btn active" onclick="loadPreset('general')">General</button>
         <button class="preset-btn" onclick="loadPreset('voz')">🗣️ Voz</button>
-        <button class="preset-btn" onclick="loadPreset('cine')">🎬 Cine</button>
-        <button class="preset-btn" onclick="loadPreset('calle')">🚦 Calle</button>
     </div>
 
     <div id="btnPower">OFF</div>
 
     <div class="panel">
-        <div class="label-group"><span>Volumen (Ganancia)</span><span class="label-val" id="volVal">1.0x</span></div>
+        <div class="label-group"><span>VOLUMEN (Subir para activar LED)</span><span class="label-val" id="volVal">1.0x</span></div>
         <input type="range" id="volControl" min="1" max="30" step="0.5" value="1">
         
-        <div class="switch-row">
-            <span class="switch-label">🛡️ Compresor Activo</span>
+        <div style="display:flex; justify-content:space-between; margin-top:10px;">
+            <span style="font-size:0.9rem;">🛡️ Compresor</span>
             <input type="checkbox" id="chkCompressor" checked>
         </div>
     </div>
 
     <div class="panel">
         <div class="label-group"><span>Bajos</span><span class="label-val" id="bassVal">0 dB</span></div>
-        <input type="range" class="bass-slider" id="bassControl" min="-20" max="20" step="1" value="0">
+        <input type="range" id="bassControl" min="-20" max="20" step="1" value="0">
         <div class="label-group"><span>Medios</span><span class="label-val" id="midVal">0 dB</span></div>
-        <input type="range" class="mid-slider" id="midControl" min="-20" max="20" step="1" value="0">
+        <input type="range" id="midControl" min="-20" max="20" step="1" value="0">
         <div class="label-group"><span>Agudos</span><span class="label-val" id="trebleVal">0 dB</span></div>
-        <input type="range" class="treble-slider" id="trebleControl" min="-20" max="20" step="1" value="0">
-    </div>
-
-    <div class="panel" style="padding: 10px;">
-        <div class="switch-row" style="border:none; margin:0; padding:0;">
-            <span class="switch-label">💡 Pantalla siempre activa</span>
-            <input type="checkbox" id="chkWakeLock">
-        </div>
+        <input type="range" id="trebleControl" min="-20" max="20" step="1" value="0">
     </div>
 
     <script>
@@ -115,24 +94,20 @@
         let bassFilter, midFilter, trebleFilter;
         let compressorNode;
         let isOn = false;
-        let wakeLock = null;
         let animationId;
 
         const silentAudio = new Audio("data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==");
         silentAudio.loop = true;
 
         const PRESETS = {
-            'general': { vol: 2, bass: 0, mid: 0, treble: -2 },
-            'voz':     { vol: 5, bass: -10, mid: 6, treble: 2 },
-            'cine':    { vol: 4, bass: 6, mid: 0, treble: 5 },
-            'calle':   { vol: 6, bass: -15, mid: 4, treble: 8 }
+            'general': { vol: 15, bass: 0, mid: 0, treble: 0 }, // Volumen alto por defecto para probar
+            'voz':     { vol: 20, bass: -10, mid: 5, treble: 0 }
         };
 
         const btn = document.getElementById('btnPower');
-        const chkWakeLock = document.getElementById('chkWakeLock');
         const chkCompressor = document.getElementById('chkCompressor');
         const compLed = document.getElementById('compLed');
-        const compStatus = document.getElementById('compStatus');
+        const dbValue = document.getElementById('dbValue');
 
         const ui = {
             vol: { input: document.getElementById('volControl'), label: document.getElementById('volVal') },
@@ -141,100 +116,48 @@
             treble: { input: document.getElementById('trebleControl'), label: document.getElementById('trebleVal') }
         };
 
-        window.addEventListener('load', () => {
-            const saved = localStorage.getItem('superOido6_1_Settings');
-            if (saved) {
-                const config = JSON.parse(saved);
-                applyConfigToUI(config);
-                if(config.lastPreset) highlightButton(config.lastPreset);
-                if(config.keepScreenOn) chkWakeLock.checked = true;
-                if(config.compressor !== undefined) chkCompressor.checked = config.compressor;
-            }
-        });
-
         function loadPreset(name) {
             const p = PRESETS[name];
             if (p) {
-                ui.vol.input.value = p.vol;
-                ui.bass.input.value = p.bass;
-                ui.mid.input.value = p.mid;
-                ui.treble.input.value = p.treble;
+                ui.vol.input.value = p.vol; ui.bass.input.value = p.bass;
+                ui.mid.input.value = p.mid; ui.treble.input.value = p.treble;
                 updateAudioSystem();
-                highlightButton(name);
-                saveToMemory(name);
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
             }
-        }
-
-        function highlightButton(name) {
-            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-            const buttons = document.querySelectorAll('.preset-btn');
-            if(name === 'general') buttons[0].classList.add('active');
-            if(name === 'voz') buttons[1].classList.add('active');
-            if(name === 'cine') buttons[2].classList.add('active');
-            if(name === 'calle') buttons[3].classList.add('active');
-        }
-
-        function saveToMemory(presetName) {
-            const config = {
-                vol: ui.vol.input.value,
-                bass: ui.bass.input.value,
-                mid: ui.mid.input.value,
-                treble: ui.treble.input.value,
-                lastPreset: presetName || 'custom',
-                keepScreenOn: chkWakeLock.checked,
-                compressor: chkCompressor.checked
-            };
-            localStorage.setItem('superOido6_1_Settings', JSON.stringify(config));
         }
 
         btn.addEventListener('click', async () => {
             if (!isOn) {
                 try {
                     silentAudio.play();
-                    
-                    if ('mediaSession' in navigator) {
-                        navigator.mediaSession.metadata = new MediaMetadata({ title: 'Super Oído 6.1', artist: 'Protección Activa' });
-                        navigator.mediaSession.setActionHandler('play', () => {}); 
-                        navigator.mediaSession.setActionHandler('pause', () => {}); 
-                    }
-
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    ctx = new AudioContext({ latencyHint: 'interactive', sampleRate: 48000 });
+                    ctx = new AudioContext({ latencyHint: 'interactive' });
                     
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, latency: 0 }
-                    });
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
 
                     source = ctx.createMediaStreamSource(stream);
-                    
-                    // Nodos
-                    gainNode = ctx.createGain(); // AHORA EL VOLUMEN ES EL PRIMERO
+                    gainNode = ctx.createGain();
                     
                     bassFilter = ctx.createBiquadFilter(); bassFilter.type = "lowshelf"; bassFilter.frequency.value = 250; 
                     midFilter = ctx.createBiquadFilter(); midFilter.type = "peaking"; midFilter.frequency.value = 1500; midFilter.Q.value = 1;
                     trebleFilter = ctx.createBiquadFilter(); trebleFilter.type = "highshelf"; trebleFilter.frequency.value = 3000;
 
+                    // CONFIGURACIÓN EXTREMA DEL COMPRESOR
                     compressorNode = ctx.createDynamicsCompressor();
-                    compressorNode.threshold.value = -30; // Más sensible (-30dB)
-                    compressorNode.knee.value = 30;
-                    compressorNode.ratio.value = 12;
-                    compressorNode.attack.value = 0.003;
-                    compressorNode.release.value = 0.25;
+                    compressorNode.threshold.value = -60; // ¡Saltará con cualquier cosa!
+                    compressorNode.knee.value = 0;        // Corte duro
+                    compressorNode.ratio.value = 20;      // Aplastar sonido
+                    compressorNode.attack.value = 0.001; 
+                    compressorNode.release.value = 0.2;
 
-                    // NUEVO ORDEN DE CABLES:
-                    // Source -> EQ -> VOLUMEN -> COMPRESOR -> Salida
-                    // Así, si subes el volumen, empujas el audio contra el compresor.
-                    
+                    // Source -> EQ -> Volumen -> Compresor -> Salida
                     source.connect(bassFilter);
                     bassFilter.connect(midFilter);
                     midFilter.connect(trebleFilter);
-                    trebleFilter.connect(gainNode); // EQ entra al volumen
+                    trebleFilter.connect(gainNode);
                     
-                    // Del volumen sale a la protección
                     connectChain();
-
                     updateAudioSystem();
-                    toggleWakeLock();
                     monitorCompression();
 
                     isOn = true;
@@ -243,8 +166,7 @@
                 } catch (e) { alert("Error: " + e.message); }
             } else {
                 if (ctx) ctx.close();
-                silentAudio.pause(); silentAudio.currentTime = 0;
-                releaseWakeLock();
+                silentAudio.pause();
                 cancelAnimationFrame(animationId);
                 compLed.classList.remove('active');
                 isOn = false;
@@ -259,42 +181,42 @@
             compressorNode.disconnect();
             
             if (chkCompressor.checked) {
-                // Con protección: Volumen -> Compresor -> Salida
                 gainNode.connect(compressorNode);
                 compressorNode.connect(ctx.destination);
-                compStatus.innerText = "Protección: ACTIVA (Limitando picos)";
-                compStatus.style.color = "#00d2ff";
             } else {
-                // Sin protección: Volumen -> Salida (Cuidado!)
                 gainNode.connect(ctx.destination);
-                compStatus.innerText = "Protección: APAGADA";
-                compStatus.style.color = "#555";
-                compLed.classList.remove('active');
             }
         }
 
-        chkCompressor.addEventListener('change', () => { connectChain(); saveToMemory(null); });
+        chkCompressor.addEventListener('change', connectChain);
 
-        // MONITOR VISUAL
+        // MONITOR ULTRASENSIBLE
         function monitorCompression() {
-            if (!isOn || !chkCompressor.checked) return;
-            // Si el compresor está trabajando, 'reduction' será un número negativo (ej -5.0)
-            const reduction = compressorNode.reduction; 
-            
-            // Umbral visual: si reduce más de 1dB, prender LED
-            if (reduction <= -1.0) {
+            if (!isOn || !chkCompressor.checked) {
+                 animationId = requestAnimationFrame(monitorCompression);
+                 return;
+            }
+
+            // Obtener valor (intenta ambas formas por compatibilidad Android/iOS)
+            let reduction = 0;
+            if (typeof compressorNode.reduction === 'object') {
+                reduction = compressorNode.reduction.value; // WebKit antiguo
+            } else {
+                reduction = compressorNode.reduction; // Estándar moderno
+            }
+
+            // Mostrar el número en pantalla (para que veas si se mueve)
+            dbValue.innerText = reduction.toFixed(2);
+
+            // Encender LED si baja aunque sea un poquito (-0.1 dB)
+            if (reduction < -0.1) {
                 compLed.classList.add('active');
             } else {
                 compLed.classList.remove('active');
             }
+            
             animationId = requestAnimationFrame(monitorCompression);
         }
-
-        async function toggleWakeLock() {
-            if (chkWakeLock.checked && isOn) { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} } else { releaseWakeLock(); }
-        }
-        function releaseWakeLock() { if (wakeLock) { wakeLock.release(); wakeLock = null; } }
-        chkWakeLock.addEventListener('change', () => { saveToMemory(null); toggleWakeLock(); });
 
         function updateAudioSystem() {
             ui.vol.label.innerText = ui.vol.input.value + "x";
@@ -310,16 +232,7 @@
             }
         }
         
-        function applyConfigToUI(config) {
-            ui.vol.input.value = config.vol;
-            ui.bass.input.value = config.bass;
-            ui.mid.input.value = config.mid;
-            ui.treble.input.value = config.treble;
-            updateAudioSystem();
-        }
-
-        Object.values(ui).forEach(control => { control.input.addEventListener('input', () => { updateAudioSystem(); document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active')); saveToMemory(null); }); });
-        document.addEventListener('visibilitychange', async () => { if (wakeLock !== null && document.visibilityState === 'visible') toggleWakeLock(); });
+        Object.values(ui).forEach(control => { control.input.addEventListener('input', updateAudioSystem); });
     </script>
 </body>
 </html>
