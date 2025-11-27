@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 12.0</title>
+    <title>Super Oído 13.0 (Split)</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { 
@@ -12,51 +12,48 @@
             padding: 15px; margin: 0; user-select: none;
             padding-bottom: 60px;
         }
-        h1 { color: #ffff00; margin: 10px 0; font-size: 20px; }
+        h1 { color: #00ff00; margin: 10px 0; font-size: 18px; }
 
-        /* VISUALIZADOR DIAGNÓSTICO */
+        /* VISUALIZADOR */
         .viz-container {
-            width: 100%; height: 150px; 
-            background: #222; border: 2px solid #555;
-            margin-bottom: 20px; border-radius: 10px;
+            width: 100%; height: 120px; 
+            background: #111; border: 1px solid #444;
+            margin-bottom: 20px; border-radius: 8px;
             position: relative;
         }
         canvas { display: block; width: 100%; height: 100%; }
         
-        /* NÚMERO DE DEPURACIÓN */
         #debugVal {
             position: absolute; top: 5px; left: 5px;
-            color: #ffff00; font-size: 12px; font-weight: bold;
-            background: rgba(0,0,0,0.5); padding: 5px;
+            color: #00ff00; font-size: 14px; font-weight: bold;
+            background: rgba(0,0,0,0.8); padding: 5px;
         }
 
-        /* CONTROLES */
+        /* POWER BTN */
         #btnPower {
             width: 100px; height: 100px; border-radius: 50%; border: 4px solid #333;
             background: #222; color: #888; font-size: 18px; font-weight: bold; cursor: pointer;
             margin: 0 auto 30px auto; display: flex; align-items: center; justify-content: center;
         }
         #btnPower.on { 
-            background: #ffff00; color: #000; 
-            border-color: #fff; box-shadow: 0 0 30px #ffff00; 
+            background: #00ff00; color: #000; 
+            border-color: #fff; box-shadow: 0 0 30px #00ff00; 
         }
 
         .panel { 
-            background: #222; border: 1px solid #444; 
-            padding: 15px; border-radius: 10px; margin-bottom: 10px; 
+            background: #1a1a1a; border-radius: 10px; padding: 15px; margin-bottom: 10px; 
         }
-        input[type=range] { width: 100%; height: 20px; accent-color: #ffff00; margin-top: 10px; }
+        input[type=range] { width: 100%; height: 15px; accent-color: #00ff00; margin-top: 10px; }
         
-        .info { font-size: 10px; color: #666; margin-top: 10px; }
+        .status { font-size: 11px; color: #555; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-    <h1>Super Oído 12.0</h1>
-    <div style="color:#888; font-size:12px; margin-bottom:5px;">Prueba Visual</div>
-
+    <h1>Super Oído 13.0</h1>
+    
     <div class="viz-container">
-        <div id="debugVal">Datos: 0</div>
+        <div id="debugVal">OFF</div>
         <canvas id="visualizer"></canvas>
     </div>
 
@@ -67,7 +64,7 @@
         <input type="range" id="volControl" min="1" max="20" step="0.5" value="1">
     </div>
 
-    <div class="info" id="statusInfo">Esperando...</div>
+    <div class="status" id="statusText">Esperando...</div>
 
     <script>
         let ctx, source, gainNode, analyser;
@@ -79,57 +76,62 @@
         const container = document.querySelector('.viz-container');
         const btn = document.getElementById('btnPower');
         const debugVal = document.getElementById('debugVal');
-        const statusInfo = document.getElementById('statusInfo');
+        const statusText = document.getElementById('statusText');
         const volControl = document.getElementById('volControl');
 
-        // FORZAR TAMAÑO FIJO (Para evitar errores de CSS)
-        function setCanvasSize() {
+        // Ajustar tamaño real
+        function resize() {
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
         }
-        window.addEventListener('resize', setCanvasSize);
-        setCanvasSize();
+        window.addEventListener('resize', resize);
+        resize();
 
         btn.addEventListener('click', async () => {
             if (!isOn) {
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    ctx = new AudioContext(); // Velocidad nativa
-
-                    statusInfo.innerText = "Audio OK: " + ctx.sampleRate + "Hz";
+                    ctx = new AudioContext(); 
+                    
+                    statusText.innerText = "Iniciando...";
 
                     const stream = await navigator.mediaDevices.getUserMedia({
                         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                     });
 
                     source = ctx.createMediaStreamSource(stream);
-                    analyser = ctx.createAnalyser();
-                    analyser.fftSize = 2048; 
                     
+                    // --- CABLE 1: AUDIO (Oídos) ---
                     gainNode = ctx.createGain();
-
-                    // Conexión Simple: Mic -> Analizador -> Volumen -> Salida
-                    // (Ponemos el analizador ANTES del volumen para ver la onda aunque el volumen esté bajo)
-                    source.connect(analyser);
-                    analyser.connect(gainNode);
+                    source.connect(gainNode);
                     gainNode.connect(ctx.destination);
 
-                    setCanvasSize();
+                    // --- CABLE 2: VISUALIZADOR (Ojos) ---
+                    // Conectamos el source TAMBIÉN al analizador por separado
+                    analyser = ctx.createAnalyser();
+                    analyser.fftSize = 256; // (Baja resolución para que sea rápido y compatible)
+                    source.connect(analyser);
+
+                    // Iniciar Dibujo
+                    resize();
                     drawLoop();
 
                     isOn = true;
                     btn.innerText = "ON";
                     btn.classList.add('on');
+                    statusText.innerText = "Sistema Activo | " + ctx.sampleRate + "Hz";
 
-                } catch (e) { alert("Error: " + e.message); }
+                } catch (e) {
+                    alert("Error: " + e.message);
+                }
             } else {
                 if(ctx) ctx.close();
                 cancelAnimationFrame(animationId);
                 isOn = false;
                 btn.innerText = "OFF";
                 btn.classList.remove('on');
-                canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-                debugVal.innerText = "Datos: 0";
+                canvasCtx.clearRect(0,0,canvas.width, canvas.height);
+                debugVal.innerText = "OFF";
             }
         });
 
@@ -139,18 +141,20 @@
 
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
+            
+            // Obtener datos de la onda
             analyser.getByteTimeDomainData(dataArray);
 
-            // 1. MOSTRAR EL DATO NUMÉRICO (Prueba de vida)
-            // Mostramos el primer valor del array. Debería oscilar entre 0 y 255.
-            debugVal.innerText = "Datos: " + dataArray[0];
+            // 1. DATO NUMÉRICO (Debe oscilar entre 0 y 255)
+            // Si está en 128 es silencio. Si cambia, hay sonido.
+            debugVal.innerText = "Dato: " + dataArray[0];
 
             // 2. DIBUJAR
-            canvasCtx.fillStyle = '#222'; // Limpiar fondo gris oscuro
+            canvasCtx.fillStyle = '#111';
             canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
-            canvasCtx.lineWidth = 5; // LÍNEA MUY GRUESA
-            canvasCtx.strokeStyle = '#ffff00'; // AMARILLO
+            canvasCtx.lineWidth = 3;
+            canvasCtx.strokeStyle = '#00ff00';
             canvasCtx.beginPath();
 
             const sliceWidth = canvas.width * 1.0 / bufferLength;
