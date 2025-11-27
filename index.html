@@ -3,90 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 8.1 Fix</title>
+    <title>Super Oído 9.0 Fix</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { 
-            font-family: 'Segoe UI', sans-serif; text-align: center; 
-            background-color: #050505; color: #e0e0e0; 
-            padding: 10px; margin: 0; overscroll-behavior: none; user-select: none;
+            font-family: monospace; text-align: center; 
+            background-color: #000; color: #0f0; 
+            padding: 10px; margin: 0; user-select: none;
             padding-bottom: 80px;
         }
-        h1 { 
-            color: #00ffcc; margin: 5px 0; font-size: 18px; 
-            text-transform: uppercase; letter-spacing: 2px;
-        }
+        h1 { color: #0f0; margin: 5px 0; font-size: 16px; text-transform: uppercase; }
 
-        /* --- VISUALIZADOR (CANVAS) --- */
-        .viz-container {
-            width: 100%; height: 80px; background: #000;
-            border: 1px solid #333; margin-bottom: 10px;
-            border-radius: 8px; overflow: hidden;
-            position: relative;
-        }
+        /* --- VISUALIZADOR --- */
         canvas {
-            width: 100%; height: 100%; display: block;
+            width: 100%; height: 100px; 
+            background: #111; border: 1px solid #333;
+            margin-bottom: 15px; display: block;
         }
 
-        /* --- LED INDICATOR --- */
-        .led-container {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            margin-bottom: 15px; font-size: 10px; color: #555; font-weight: 600; text-transform: uppercase;
-        }
-        .led {
-            width: 10px; height: 10px; border-radius: 50%;
-            background-color: #222; border: 1px solid #444; transition: all 0.1s;
-        }
-        .led.active { background-color: #ff3333; box-shadow: 0 0 10px #ff0000; border-color: #fff;}
-
-        /* --- CONTROLES PRINCIPALES --- */
+        /* --- CONTROLES --- */
         .main-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
 
         #btnPower {
-            width: 80px; height: 80px; border-radius: 50%; border: 3px solid #2a2a2a;
-            background: #181818; color: #444; font-size: 14px; font-weight: bold; cursor: pointer;
-            box-shadow: inset 0 0 20px #000; display: flex; align-items: center; justify-content: center;
+            width: 80px; height: 80px; border-radius: 50%; border: 2px solid #333;
+            background: #222; color: #666; font-size: 14px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
-        #btnPower.on { background: #00ffcc; color: #000; border-color: #fff; box-shadow: 0 0 30px #00ffcc; }
+        #btnPower.on { background: #0f0; color: #000; box-shadow: 0 0 20px #0f0; border-color: #fff;}
 
         #btnRec {
-            width: 50px; height: 50px; border-radius: 50%; border: 2px solid #333;
-            background: #181818; color: #cc0000; font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 20px;
+            width: 50px; height: 50px; border-radius: 50%; border: 1px solid #333;
+            background: #222; color: #f00; font-size: 20px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
-        #btnRec.recording { background: #cc0000; color: #fff; animation: pulse 1s infinite; border-color: #fff;}
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        #btnRec.recording { background: #f00; color: #fff; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* --- BOTONERA --- */
-        .preset-container { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; margin-bottom: 15px; }
-        .preset-btn { background: #1e1e1e; border: 1px solid #333; color: #888; padding: 8px; border-radius: 8px; font-size: 11px; cursor: pointer; }
-        .preset-btn.active { background: #00ffcc; color: #000; font-weight: bold; border-color: #fff;}
+        /* --- BOTONERA PRESETS --- */
+        .preset-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; }
+        .preset-btn { background: #111; border: 1px solid #333; color: #666; padding: 10px; cursor: pointer; }
+        .preset-btn.active { background: #0f0; color: #000; font-weight: bold; }
 
         /* --- PANELES --- */
-        .panel { background: #161616; border-radius: 12px; padding: 15px; margin-bottom: 10px; border: 1px solid #222; }
-        .label-group { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #888;}
-        .label-val { color: #00ffcc; font-weight: bold; font-family: monospace;}
-
-        input[type=range] { width: 100%; height: 5px; border-radius: 5px; background: #333; outline: none; -webkit-appearance: none; margin-bottom: 5px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #00ffcc; cursor: pointer; border: 2px solid #000; }
+        .panel { background: #111; border: 1px solid #333; padding: 10px; margin-bottom: 10px; }
+        input[type=range] { width: 100%; accent-color: #0f0; margin: 10px 0; }
         
-        .footer-opts { font-size: 10px; color: #555; display: flex; justify-content: space-around; margin-top: 10px;}
-        input[type=checkbox] { accent-color: #00ffcc; }
+        /* --- BOTÓN REPARAR --- */
+        #btnFix {
+            background: #333; color: #fff; border: 1px solid #fff; padding: 8px 20px;
+            margin-top: 20px; cursor: pointer; font-family: monospace;
+        }
+
+        .status-text { font-size: 10px; color: #666; margin-bottom: 5px; display: block;}
     </style>
 </head>
 <body>
 
-    <h1>Super Oído 8.1</h1>
-    
-    <div class="viz-container">
-        <canvas id="visualizer"></canvas>
-    </div>
-    
-    <div class="led-container">
-        <div class="led" id="compLed"></div>
-        <span id="recStatus">SISTEMA LISTO</span>
-    </div>
+    <h1>Super Oído 9.0</h1>
+    <span id="hzDisplay" class="status-text">Sistema en espera...</span>
 
+    <canvas id="visualizer"></canvas>
+    
     <div class="main-controls">
         <div id="btnPower">OFF</div>
         <div id="btnRec">●</div>
@@ -100,28 +77,29 @@
     </div>
 
     <div class="panel">
-        <div class="label-group"><span>VOLUMEN</span><span class="label-val" id="volVal">1.0x</span></div>
+        <div>VOLUMEN: <span id="volVal">1.0</span></div>
         <input type="range" id="volControl" min="1" max="30" step="0.5" value="1">
         
-        <div class="label-group" style="margin-top: 15px;">
-            <span>L</span><span style="color:#fff; font-size:10px;">BALANCE</span><span>R</span>
-        </div>
-        <input type="range" class="bal-slider" id="balControl" min="-1" max="1" step="0.1" value="0">
+        <div>BALANCE L/R</div>
+        <input type="range" id="balControl" min="-1" max="1" step="0.1" value="0">
     </div>
 
     <div class="panel">
-        <div class="label-group"><span>Bajos</span><span class="label-val" id="bassVal">0</span></div>
-        <input type="range" class="bass-slider" id="bassControl" min="-20" max="20" step="1" value="0">
-        <div class="label-group"><span>Medios</span><span class="label-val" id="midVal">0</span></div>
-        <input type="range" class="mid-slider" id="midControl" min="-20" max="20" step="1" value="0">
-        <div class="label-group"><span>Agudos</span><span class="label-val" id="trebleVal">0</span></div>
-        <input type="range" class="treble-slider" id="trebleControl" min="-20" max="20" step="1" value="0">
+        <div>EQ (Bajos / Medios / Agudos)</div>
+        <input type="range" id="bassControl" min="-20" max="20" step="1" value="0">
+        <input type="range" id="midControl" min="-20" max="20" step="1" value="0">
+        <input type="range" id="trebleControl" min="-20" max="20" step="1" value="0">
     </div>
 
-    <div class="footer-opts">
-        <label><input type="checkbox" id="chkCompressor" checked> 🛡️ Compresor</label>
-        <label><input type="checkbox" id="chkWakeLock"> 💡 Pantalla ON</label>
-    </div>
+    <button id="btnFix" onclick="toggleSampleRate()">🛠️ REPARAR AUDIO (Borracho)</button>
+    
+    <br><br>
+    <label style="color:#666; font-size:12px;">
+        <input type="checkbox" id="chkCompressor" checked> Compresor
+    </label>
+    <label style="color:#666; font-size:12px; margin-left: 15px;">
+        <input type="checkbox" id="chkWakeLock"> Pantalla ON
+    </label>
 
     <script>
         let ctx, source, gainNode, pannerNode, analyserNode, compressorNode;
@@ -132,19 +110,13 @@
         let isRecording = false;
         let wakeLock = null;
         let animationId;
+        
+        // Configuración de Sample Rate (El arreglo del borracho)
+        let currentSampleRate = 0; // 0 = Automático, 44100, 48000
 
         const canvas = document.getElementById('visualizer');
         const canvasCtx = canvas.getContext('2d');
-        const container = document.querySelector('.viz-container');
-
-        // Función para ajustar el tamaño del canvas al contenedor real
-        function resizeCanvas() {
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        // Llamar una vez al inicio
-        resizeCanvas();
+        const hzDisplay = document.getElementById('hzDisplay');
 
         const silentAudio = new Audio("data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==");
         silentAudio.loop = true;
@@ -160,63 +132,67 @@
         const btnRec = document.getElementById('btnRec');
         const chkWakeLock = document.getElementById('chkWakeLock');
         const chkCompressor = document.getElementById('chkCompressor');
-        const compLed = document.getElementById('compLed');
-        const recStatus = document.getElementById('recStatus');
 
         const ui = {
-            vol: { input: document.getElementById('volControl'), label: document.getElementById('volVal') },
-            bal: { input: document.getElementById('balControl') },
-            bass: { input: document.getElementById('bassControl'), label: document.getElementById('bassVal') },
-            mid: { input: document.getElementById('midControl'), label: document.getElementById('midVal') },
-            treble: { input: document.getElementById('trebleControl'), label: document.getElementById('trebleVal') }
+            vol: document.getElementById('volControl'),
+            bal: document.getElementById('balControl'),
+            bass: document.getElementById('bassControl'),
+            mid: document.getElementById('midControl'),
+            treble: document.getElementById('trebleControl'),
+            volVal: document.getElementById('volVal')
         };
 
-        window.addEventListener('load', () => {
-            resizeCanvas(); // Asegurar tamaño al cargar
-            const saved = localStorage.getItem('superOido8_1_Settings');
-            if (saved) {
-                const config = JSON.parse(saved);
-                applyConfigToUI(config);
-                if(config.lastPreset) highlightButton(config.lastPreset);
-                if(config.keepScreenOn) chkWakeLock.checked = true;
-                if(config.compressor !== undefined) chkCompressor.checked = config.compressor;
-            }
-        });
-
-        function loadPreset(name) {
-            const p = PRESETS[name];
-            if (p) {
-                ui.vol.input.value = p.vol;
-                ui.bass.input.value = p.bass;
-                ui.mid.input.value = p.mid;
-                ui.treble.input.value = p.treble;
-                updateAudioSystem();
-                highlightButton(name);
-                saveToMemory(name);
-            }
+        // Arreglar tamaño del canvas
+        function fixCanvasSize() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
         }
-        function highlightButton(name) {
-            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-            const buttons = document.querySelectorAll('.preset-btn');
-            const map = {'general':0, 'voz':1, 'cine':2, 'calle':3};
-            if(buttons[map[name]]) buttons[map[name]].classList.add('active');
+
+        // --- FUNCIÓN MÁGICA PARA REPARAR AUDIO ---
+        function toggleSampleRate() {
+            if(isOn) btn.click(); // Apagar primero
+            
+            if (currentSampleRate === 0) {
+                currentSampleRate = 48000;
+                alert("Cambiando a Modo 48kHz (Toca ON de nuevo)");
+            } else if (currentSampleRate === 48000) {
+                currentSampleRate = 44100;
+                alert("Cambiando a Modo 44.1kHz (Toca ON de nuevo)");
+            } else {
+                currentSampleRate = 0;
+                alert("Cambiando a Modo Automático (Toca ON de nuevo)");
+            }
+            hzDisplay.innerText = "Modo seleccionado: " + (currentSampleRate || "Auto");
         }
 
         btn.addEventListener('click', async () => {
             if (!isOn) {
                 try {
                     silentAudio.play();
-                    
-                    // CORRECCIÓN VELOCIDAD: Quitamos 'sampleRate' forzado
+                    fixCanvasSize(); // Arreglar visualizador al encender
+
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    ctx = new AudioContext({ latencyHint: 'interactive' }); 
                     
+                    // APLICAR PARCHE DE AUDIO BORRACHO
+                    let options = { latencyHint: 'interactive' };
+                    if (currentSampleRate > 0) {
+                        options.sampleRate = currentSampleRate;
+                    }
+                    ctx = new AudioContext(options);
+                    
+                    hzDisplay.innerText = `Frecuencia Activa: ${ctx.sampleRate}Hz`;
+
                     const stream = await navigator.mediaDevices.getUserMedia({
-                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, latency: 0 }
+                        audio: { 
+                            echoCancellation: false, 
+                            noiseSuppression: false, 
+                            autoGainControl: false 
+                        }
                     });
 
                     source = ctx.createMediaStreamSource(stream);
                     
+                    // Nodos
                     bassFilter = ctx.createBiquadFilter(); bassFilter.type = "lowshelf"; bassFilter.frequency.value = 250; 
                     midFilter = ctx.createBiquadFilter(); midFilter.type = "peaking"; midFilter.frequency.value = 1500; midFilter.Q.value = 1;
                     trebleFilter = ctx.createBiquadFilter(); trebleFilter.type = "highshelf"; trebleFilter.frequency.value = 3000;
@@ -225,30 +201,26 @@
                     gainNode = ctx.createGain();
 
                     compressorNode = ctx.createDynamicsCompressor();
-                    compressorNode.threshold.value = -30; compressorNode.knee.value = 20; compressorNode.ratio.value = 12;
-                    compressorNode.attack.value = 0.003; compressorNode.release.value = 0.25;
+                    compressorNode.threshold.value = -30;
+                    compressorNode.ratio.value = 12;
 
                     analyserNode = ctx.createAnalyser();
-                    analyserNode.fftSize = 2048; // Calidad del gráfico
+                    analyserNode.fftSize = 2048;
 
                     destStream = ctx.createMediaStreamDestination();
 
-                    // CONEXIÓN
+                    // Conexiones
                     source.connect(bassFilter);
                     bassFilter.connect(midFilter);
                     midFilter.connect(trebleFilter);
-                    trebleFilter.connect(pannerNode); 
+                    trebleFilter.connect(pannerNode);
                     pannerNode.connect(gainNode);
                     
-                    connectChain();
+                    updateChain(); // Conectar compresor/salida
 
                     updateAudioSystem();
                     toggleWakeLock();
-                    
-                    // Reiniciar tamaño del canvas por si acaso
-                    resizeCanvas();
-                    drawVisualizer(); 
-                    monitorCompression();
+                    drawVisualizer(); // INICIAR ANIMACIÓN
 
                     isOn = true;
                     btn.innerText = "ON";
@@ -259,75 +231,37 @@
             }
         });
 
-        function stopAll() {
-            if (ctx) ctx.close();
-            if (isRecording) stopRecording();
-            silentAudio.pause(); silentAudio.currentTime = 0;
-            releaseWakeLock();
-            cancelAnimationFrame(animationId);
-            compLed.classList.remove('active');
-            isOn = false;
-            btn.innerText = "OFF";
-            btn.classList.remove('on');
-            canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function connectChain() {
+        function updateChain() {
             if(!ctx) return;
             gainNode.disconnect();
             compressorNode.disconnect();
             analyserNode.disconnect();
 
-            let lastNode = gainNode;
-            if (chkCompressor.checked) {
-                lastNode.connect(compressorNode);
-                lastNode = compressorNode;
+            let last = gainNode;
+            if(chkCompressor.checked) {
+                last.connect(compressorNode);
+                last = compressorNode;
             }
-            lastNode.connect(analyserNode);
+            last.connect(analyserNode);
             analyserNode.connect(ctx.destination);
             analyserNode.connect(destStream);
         }
 
-        btnRec.addEventListener('click', () => {
-            if(!isOn) return alert("Enciende primero");
-            if(!isRecording) {
-                chunks = [];
-                mediaRecorder = new MediaRecorder(destStream.stream);
-                mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(chunks, { 'type' : 'audio/webm; codecs=opus' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    const date = new Date();
-                    a.download = `Audio_${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}.webm`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    recStatus.innerText = "Guardado ✅";
-                    setTimeout(() => recStatus.innerText = "SISTEMA LISTO", 3000);
-                };
-                mediaRecorder.start();
-                isRecording = true;
-                btnRec.innerText = "■";
-                btnRec.classList.add('recording');
-                recStatus.innerText = "🔴 GRABANDO...";
-                recStatus.style.color = "#ff3333";
-            } else {
-                stopRecording();
-            }
-        });
+        chkCompressor.addEventListener('change', updateChain);
 
-        function stopRecording() {
-            if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-            isRecording = false;
-            btnRec.innerText = "●";
-            btnRec.classList.remove('recording');
-            recStatus.innerText = "Procesando...";
-            recStatus.style.color = "#555";
+        function stopAll() {
+            if (ctx) ctx.close();
+            silentAudio.pause();
+            cancelAnimationFrame(animationId);
+            isOn = false;
+            btn.innerText = "OFF";
+            btn.classList.remove('on');
+            // Limpiar visualizador
+            canvasCtx.fillStyle = "#000";
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
+        // --- VISUALIZADOR ARREGLADO ---
         function drawVisualizer() {
             if(!isOn) return;
             animationId = requestAnimationFrame(drawVisualizer);
@@ -336,10 +270,10 @@
             const dataArray = new Uint8Array(bufferLength);
             analyserNode.getByteTimeDomainData(dataArray);
 
-            canvasCtx.fillStyle = '#000'; // Fondo negro limpio
+            canvasCtx.fillStyle = 'rgb(0, 0, 0)';
             canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-            canvasCtx.lineWidth = 3; // Línea más gruesa
-            canvasCtx.strokeStyle = '#00ffcc'; // Color Neon
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeStyle = 'rgb(0, 255, 0)'; // Verde Hacker
             canvasCtx.beginPath();
 
             const sliceWidth = canvas.width * 1.0 / bufferLength;
@@ -358,56 +292,57 @@
             canvasCtx.stroke();
         }
 
-        function monitorCompression() {
-            if (!isOn || !chkCompressor.checked) return;
-            let reduction = (typeof compressorNode.reduction === 'object') ? compressorNode.reduction.value : compressorNode.reduction;
-            if (reduction <= -1.0) compLed.classList.add('active');
-            else compLed.classList.remove('active');
-            // Nota: el loop principal ya corre con requestAnimationFrame en drawVisualizer
-        }
-
+        // --- RESTO DE FUNCIONES (Presets, UI, Rec) ---
         function updateAudioSystem() {
-            ui.vol.label.innerText = ui.vol.input.value + "x";
-            ui.bass.label.innerText = (ui.bass.input.value > 0 ? "+" : "") + ui.bass.input.value;
-            ui.mid.label.innerText = (ui.mid.input.value > 0 ? "+" : "") + ui.mid.input.value;
-            ui.treble.label.innerText = (ui.treble.input.value > 0 ? "+" : "") + ui.treble.input.value;
-
-            if (isOn && gainNode) {
-                gainNode.gain.value = ui.vol.input.value;
-                pannerNode.pan.value = ui.bal.input.value;
-                bassFilter.gain.value = ui.bass.input.value;
-                midFilter.gain.value = ui.mid.input.value;
-                trebleFilter.gain.value = ui.treble.input.value;
-            }
+            if (!isOn) return;
+            gainNode.gain.value = ui.vol.value;
+            ui.volVal.innerText = ui.vol.value;
+            pannerNode.pan.value = ui.bal.value;
+            bassFilter.gain.value = ui.bass.value;
+            midFilter.gain.value = ui.mid.value;
+            trebleFilter.gain.value = ui.treble.value;
         }
         
-        function saveToMemory(presetName) {
-            const config = {
-                vol: ui.vol.input.value,
-                bass: ui.bass.input.value,
-                mid: ui.mid.input.value,
-                treble: ui.treble.input.value,
-                lastPreset: presetName || 'custom',
-                keepScreenOn: chkWakeLock.checked,
-                compressor: chkCompressor.checked
-            };
-            localStorage.setItem('superOido8_1_Settings', JSON.stringify(config));
-        }
-        function applyConfigToUI(config) {
-            ui.vol.input.value = config.vol;
-            ui.bass.input.value = config.bass;
-            ui.mid.input.value = config.mid;
-            ui.treble.input.value = config.treble;
+        // Eventos inputs
+        [ui.vol, ui.bal, ui.bass, ui.mid, ui.treble].forEach(el => el.addEventListener('input', updateAudioSystem));
+
+        function loadPreset(name) {
+            const p = PRESETS[name];
+            ui.vol.value = p.vol; ui.bass.value = p.bass; ui.mid.value = p.mid; ui.treble.value = p.treble;
             updateAudioSystem();
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
         }
 
-        chkCompressor.addEventListener('change', () => { connectChain(); saveToMemory(null); });
-        Object.values(ui).forEach(control => { control.input.addEventListener('input', () => { updateAudioSystem(); saveToMemory(null); }); });
+        btnRec.addEventListener('click', () => {
+            if(!isOn) return;
+            if(!isRecording) {
+                chunks = [];
+                mediaRecorder = new MediaRecorder(destStream.stream);
+                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { 'type' : 'audio/webm; codecs=opus' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'grabacion.webm';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                };
+                mediaRecorder.start();
+                isRecording = true;
+                btnRec.classList.add('recording');
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                btnRec.classList.remove('recording');
+            }
+        });
         
-        async function toggleWakeLock() { if (chkWakeLock.checked && isOn) { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} } else { releaseWakeLock(); } }
-        function releaseWakeLock() { if (wakeLock) { wakeLock.release(); wakeLock = null; } }
-        chkWakeLock.addEventListener('change', () => { saveToMemory(null); toggleWakeLock(); });
-        document.addEventListener('visibilitychange', async () => { if (wakeLock !== null && document.visibilityState === 'visible') toggleWakeLock(); });
+        async function toggleWakeLock() { if (chkWakeLock.checked && isOn && 'wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); else if(wakeLock) wakeLock.release(); }
+        chkWakeLock.addEventListener('change', toggleWakeLock);
+
     </script>
 </body>
 </html>
