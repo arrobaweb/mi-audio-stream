@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 11.0</title>
+    <title>Super Oído 12.0</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { 
@@ -12,16 +12,23 @@
             padding: 15px; margin: 0; user-select: none;
             padding-bottom: 60px;
         }
-        h1 { color: #0f0; margin: 10px 0; font-size: 20px; }
+        h1 { color: #ffff00; margin: 10px 0; font-size: 20px; }
 
-        /* VISUALIZADOR GRANDE */
+        /* VISUALIZADOR DIAGNÓSTICO */
         .viz-container {
-            width: 100%; height: 120px; 
-            background: #111; border: 2px solid #333;
+            width: 100%; height: 150px; 
+            background: #222; border: 2px solid #555;
             margin-bottom: 20px; border-radius: 10px;
             position: relative;
         }
         canvas { display: block; width: 100%; height: 100%; }
+        
+        /* NÚMERO DE DEPURACIÓN */
+        #debugVal {
+            position: absolute; top: 5px; left: 5px;
+            color: #ffff00; font-size: 12px; font-weight: bold;
+            background: rgba(0,0,0,0.5); padding: 5px;
+        }
 
         /* CONTROLES */
         #btnPower {
@@ -30,43 +37,40 @@
             margin: 0 auto 30px auto; display: flex; align-items: center; justify-content: center;
         }
         #btnPower.on { 
-            background: #0f0; color: #000; 
-            border-color: #fff; box-shadow: 0 0 40px #0f0; 
+            background: #ffff00; color: #000; 
+            border-color: #fff; box-shadow: 0 0 30px #ffff00; 
         }
 
         .panel { 
             background: #222; border: 1px solid #444; 
             padding: 15px; border-radius: 10px; margin-bottom: 10px; 
         }
-        input[type=range] { width: 100%; height: 10px; accent-color: #0f0; margin-top: 10px; }
+        input[type=range] { width: 100%; height: 20px; accent-color: #ffff00; margin-top: 10px; }
         
-        .debug-text { color: #555; font-size: 10px; margin-top: 20px; }
+        .info { font-size: 10px; color: #666; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <h1>Super Oído 11.0</h1>
-    
+    <h1>Super Oído 12.0</h1>
+    <div style="color:#888; font-size:12px; margin-bottom:5px;">Prueba Visual</div>
+
     <div class="viz-container">
+        <div id="debugVal">Datos: 0</div>
         <canvas id="visualizer"></canvas>
     </div>
 
     <div id="btnPower">OFF</div>
 
     <div class="panel">
-        <div>VOLUMEN MAESTRO</div>
+        <div>VOLUMEN</div>
         <input type="range" id="volControl" min="1" max="20" step="0.5" value="1">
     </div>
 
-    <div class="panel">
-        <div>FILTRO AGUDOS</div>
-        <input type="range" id="trebleControl" min="-10" max="10" step="1" value="0">
-    </div>
-
-    <div class="debug-text" id="statusInfo">Esperando...</div>
+    <div class="info" id="statusInfo">Esperando...</div>
 
     <script>
-        let ctx, source, gainNode, analyser, trebleFilter;
+        let ctx, source, gainNode, analyser;
         let isOn = false;
         let animationId;
 
@@ -74,123 +78,98 @@
         const canvasCtx = canvas.getContext('2d');
         const container = document.querySelector('.viz-container');
         const btn = document.getElementById('btnPower');
+        const debugVal = document.getElementById('debugVal');
         const statusInfo = document.getElementById('statusInfo');
         const volControl = document.getElementById('volControl');
-        const trebleControl = document.getElementById('trebleControl');
 
-        // --- ARREGLO DE RESOLUCIÓN (DPI FIX) ---
-        function resizeCanvas() {
-            // Obtenemos la densidad de píxeles del celular (ej. 2x, 3x)
-            const dpr = window.devicePixelRatio || 1;
-            
-            // Ajustamos el tamaño real del canvas multiplicando por la densidad
-            canvas.width = container.clientWidth * dpr;
-            canvas.height = container.clientHeight * dpr;
-            
-            // Normalizamos el contexto para que use coordenadas lógicas
-            canvasCtx.scale(dpr, dpr);
-            
-            // Guardamos el tamaño lógico para dibujar luego
-            canvas.logicalWidth = container.clientWidth;
-            canvas.logicalHeight = container.clientHeight;
+        // FORZAR TAMAÑO FIJO (Para evitar errores de CSS)
+        function setCanvasSize() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
         }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        window.addEventListener('resize', setCanvasSize);
+        setCanvasSize();
 
         btn.addEventListener('click', async () => {
             if (!isOn) {
                 try {
-                    // 1. AudioContext LIMPIO (Sin latencyHint para evitar sonido robótico)
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    ctx = new AudioContext(); 
-                    
-                    // Forzar inicio en móviles
-                    if (ctx.state === 'suspended') {
-                        await ctx.resume();
-                    }
+                    ctx = new AudioContext(); // Velocidad nativa
 
-                    statusInfo.innerText = "Motor: " + ctx.state + " | " + ctx.sampleRate + "Hz";
+                    statusInfo.innerText = "Audio OK: " + ctx.sampleRate + "Hz";
 
                     const stream = await navigator.mediaDevices.getUserMedia({
                         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                     });
 
                     source = ctx.createMediaStreamSource(stream);
-
-                    // 2. Nodos
                     analyser = ctx.createAnalyser();
-                    analyser.fftSize = 2048; // Tamaño del buffer de análisis
-
-                    trebleFilter = ctx.createBiquadFilter();
-                    trebleFilter.type = "highshelf";
-                    trebleFilter.frequency.value = 3000;
-
+                    analyser.fftSize = 2048; 
+                    
                     gainNode = ctx.createGain();
 
-                    // Conexión: Source -> EQ -> Volumen -> Analizador -> Salida
-                    source.connect(trebleFilter);
-                    trebleFilter.connect(gainNode);
-                    gainNode.connect(analyser);
-                    analyser.connect(ctx.destination);
+                    // Conexión Simple: Mic -> Analizador -> Volumen -> Salida
+                    // (Ponemos el analizador ANTES del volumen para ver la onda aunque el volumen esté bajo)
+                    source.connect(analyser);
+                    analyser.connect(gainNode);
+                    gainNode.connect(ctx.destination);
 
-                    // 3. Iniciar Visualizador
-                    resizeCanvas(); // Asegurar tamaño
-                    drawWaveform();
+                    setCanvasSize();
+                    drawLoop();
 
                     isOn = true;
                     btn.innerText = "ON";
                     btn.classList.add('on');
 
-                } catch (e) {
-                    alert("Error: " + e.message);
-                }
+                } catch (e) { alert("Error: " + e.message); }
             } else {
                 if(ctx) ctx.close();
                 cancelAnimationFrame(animationId);
                 isOn = false;
                 btn.innerText = "OFF";
                 btn.classList.remove('on');
-                // Limpiar pantalla
-                canvasCtx.clearRect(0, 0, canvas.logicalWidth, canvas.logicalHeight);
+                canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+                debugVal.innerText = "Datos: 0";
             }
         });
 
-        function drawWaveform() {
+        function drawLoop() {
             if(!isOn) return;
-            animationId = requestAnimationFrame(drawWaveform);
+            animationId = requestAnimationFrame(drawLoop);
 
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteTimeDomainData(dataArray);
 
-            // Limpiar fondo
-            canvasCtx.fillStyle = '#000';
-            canvasCtx.fillRect(0, 0, canvas.logicalWidth, canvas.logicalHeight);
+            // 1. MOSTRAR EL DATO NUMÉRICO (Prueba de vida)
+            // Mostramos el primer valor del array. Debería oscilar entre 0 y 255.
+            debugVal.innerText = "Datos: " + dataArray[0];
 
-            // Configurar Línea
-            canvasCtx.lineWidth = 4; // <--- LÍNEA GRUESA
-            canvasCtx.strokeStyle = '#00ff00'; // VERDE FLUORESCENTE
+            // 2. DIBUJAR
+            canvasCtx.fillStyle = '#222'; // Limpiar fondo gris oscuro
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+            canvasCtx.lineWidth = 5; // LÍNEA MUY GRUESA
+            canvasCtx.strokeStyle = '#ffff00'; // AMARILLO
             canvasCtx.beginPath();
 
-            const sliceWidth = canvas.logicalWidth * 1.0 / bufferLength;
+            const sliceWidth = canvas.width * 1.0 / bufferLength;
             let x = 0;
 
             for(let i = 0; i < bufferLength; i++) {
                 const v = dataArray[i] / 128.0;
-                const y = v * canvas.logicalHeight / 2;
+                const y = v * canvas.height / 2;
 
                 if(i === 0) canvasCtx.moveTo(x, y);
                 else canvasCtx.lineTo(x, y);
 
                 x += sliceWidth;
             }
-            canvasCtx.lineTo(canvas.logicalWidth, canvas.logicalHeight / 2);
+            canvasCtx.lineTo(canvas.width, canvas.height / 2);
             canvasCtx.stroke();
         }
 
-        // Controles
         volControl.addEventListener('input', () => { if(gainNode) gainNode.gain.value = volControl.value; });
-        trebleControl.addEventListener('input', () => { if(trebleFilter) trebleFilter.gain.value = trebleControl.value; });
 
     </script>
 </body>
