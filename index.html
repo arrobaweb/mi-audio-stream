@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 5.0</title>
+    <title>Super Oído 6.0</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { 
@@ -15,9 +15,21 @@
             margin: 0;
             overscroll-behavior: none; 
             user-select: none;
-            padding-bottom: 50px; /* Espacio extra abajo */
+            padding-bottom: 50px;
         }
         h1 { color: #00d2ff; margin: 5px 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;}
+
+        /* --- LED INDICATOR (NUEVO) --- */
+        .led-container {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            margin-bottom: 15px; font-size: 12px; color: #666;
+        }
+        .led {
+            width: 12px; height: 12px; border-radius: 50%;
+            background-color: #333; border: 1px solid #555;
+            transition: background-color 0.1s;
+        }
+        .led.active { background-color: #ff4757; box-shadow: 0 0 10px #ff4757; border-color: #fff;}
 
         /* --- BOTONERA --- */
         .preset-container {
@@ -52,6 +64,7 @@
         .panel {
             background: #1e1e1e; border-radius: 12px; padding: 15px;
             margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            position: relative;
         }
         .label-group { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #888;}
         .label-val { color: #00d2ff; font-weight: bold;}
@@ -69,18 +82,23 @@
         .mid-slider::-webkit-slider-thumb { background: #ffa502; }
         .treble-slider::-webkit-slider-thumb { background: #2ed573; }
 
-        /* Opción Pantalla */
-        .screen-lock {
-            margin-top: 20px; font-size: 0.8rem; color: #666;
+        /* Switches */
+        .switch-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 10px; padding-top: 10px; border-top: 1px solid #333;
         }
-        .screen-lock input { margin-right: 10px; }
+        .switch-label { font-size: 0.9rem; color: #aaa; }
+        input[type=checkbox] { transform: scale(1.2); accent-color: #00d2ff; }
 
     </style>
 </head>
 <body>
 
-    <h1>Super Oído 5.0</h1>
-    <div style="font-size: 12px; color: #555; margin-bottom: 10px;">Versión Background</div>
+    <h1>Super Oído 6.0</h1>
+    <div class="led-container">
+        <div class="led" id="compLed"></div>
+        <span id="compStatus">Protección Auditiva Lista</span>
+    </div>
     
     <div class="preset-container">
         <button class="preset-btn active" onclick="loadPreset('general')">General</button>
@@ -93,7 +111,12 @@
 
     <div class="panel">
         <div class="label-group"><span>Volumen</span><span class="label-val" id="volVal">1.0x</span></div>
-        <input type="range" id="volControl" min="1" max="50" step="0.5" value="1">
+        <input type="range" id="volControl" min="1" max="30" step="0.5" value="1">
+        
+        <div class="switch-row">
+            <span class="switch-label">🛡️ Compresor (Anti-Picos)</span>
+            <input type="checkbox" id="chkCompressor" checked>
+        </div>
     </div>
 
     <div class="panel">
@@ -105,34 +128,38 @@
         <input type="range" class="treble-slider" id="trebleControl" min="-20" max="20" step="1" value="0">
     </div>
 
-    <div class="screen-lock">
-        <label>
-            <input type="checkbox" id="chkWakeLock"> 💡 Mantener pantalla encendida
-        </label>
-        <div style="margin-top:5px; font-size: 10px;">(Activar si el audio se corta mucho)</div>
+    <div class="panel" style="padding: 10px;">
+        <div class="switch-row" style="border:none; margin:0; padding:0;">
+            <span class="switch-label">💡 Pantalla siempre activa</span>
+            <input type="checkbox" id="chkWakeLock">
+        </div>
     </div>
 
     <script>
         let ctx, source, gainNode;
         let bassFilter, midFilter, trebleFilter;
+        let compressorNode; // NUEVO NODO
         let isOn = false;
         let wakeLock = null;
+        let animationId;
 
-        // --- EL TRUCO DEL AUDIO FANTASMA ---
-        // Creamos un audio HTML5 invisible y silencioso que sonará en bucle.
-        // Esto engaña al navegador para que crea que somos "Spotify" y no nos cierre.
         const silentAudio = new Audio("data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==");
         silentAudio.loop = true;
 
+        // --- PRESETS AJUSTADOS (Menos agudos para evitar lo "chillón") ---
         const PRESETS = {
-            'general': { vol: 2, bass: 0, mid: 0, treble: 0 },
-            'voz':     { vol: 5, bass: -10, mid: 8, treble: 5 },
-            'cine':    { vol: 4, bass: 8, mid: 0, treble: 8 },
-            'calle':   { vol: 6, bass: -15, mid: 5, treble: 12 }
+            'general': { vol: 2, bass: 0, mid: 0, treble: -2 }, // Agudos bajados un poco
+            'voz':     { vol: 5, bass: -10, mid: 6, treble: 2 },  // Voz más suave
+            'cine':    { vol: 4, bass: 6, mid: 0, treble: 5 },
+            'calle':   { vol: 6, bass: -15, mid: 4, treble: 8 }
         };
 
         const btn = document.getElementById('btnPower');
         const chkWakeLock = document.getElementById('chkWakeLock');
+        const chkCompressor = document.getElementById('chkCompressor');
+        const compLed = document.getElementById('compLed');
+        const compStatus = document.getElementById('compStatus');
+
         const ui = {
             vol: { input: document.getElementById('volControl'), label: document.getElementById('volVal') },
             bass: { input: document.getElementById('bassControl'), label: document.getElementById('bassVal') },
@@ -140,18 +167,17 @@
             treble: { input: document.getElementById('trebleControl'), label: document.getElementById('trebleVal') }
         };
 
-        // --- CARGAR MEMORIA ---
         window.addEventListener('load', () => {
-            const saved = localStorage.getItem('superOido5_Settings');
+            const saved = localStorage.getItem('superOido6_Settings');
             if (saved) {
                 const config = JSON.parse(saved);
                 applyConfigToUI(config);
                 if(config.lastPreset) highlightButton(config.lastPreset);
                 if(config.keepScreenOn) chkWakeLock.checked = true;
+                if(config.compressor !== undefined) chkCompressor.checked = config.compressor;
             }
         });
 
-        // --- SISTEMA DE PRESETS Y UI ---
         function loadPreset(name) {
             const p = PRESETS[name];
             if (p) {
@@ -181,30 +207,25 @@
                 mid: ui.mid.input.value,
                 treble: ui.treble.input.value,
                 lastPreset: presetName || 'custom',
-                keepScreenOn: chkWakeLock.checked
+                keepScreenOn: chkWakeLock.checked,
+                compressor: chkCompressor.checked
             };
-            localStorage.setItem('superOido5_Settings', JSON.stringify(config));
+            localStorage.setItem('superOido6_Settings', JSON.stringify(config));
         }
 
-        // --- ENGINE DE AUDIO PRINCIPAL ---
         btn.addEventListener('click', async () => {
             if (!isOn) {
                 try {
-                    // 1. INICIAR EL AUDIO FANTASMA (El truco)
                     silentAudio.play();
                     
-                    // 2. CONFIGURAR LA BARRA DE NOTIFICACIONES (Lock Screen)
                     if ('mediaSession' in navigator) {
                         navigator.mediaSession.metadata = new MediaMetadata({
-                            title: 'Super Oído Activo',
-                            artist: 'Amplificando entorno...',
-                            artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/59/59284.png', sizes: '96x96', type: 'image/png' }]
+                            title: 'Super Oído Activo', artist: 'Protección Activada'
                         });
-                        navigator.mediaSession.setActionHandler('play', () => {}); // No hacer nada, solo mantener vivo
+                        navigator.mediaSession.setActionHandler('play', () => {}); 
                         navigator.mediaSession.setActionHandler('pause', () => {}); 
                     }
 
-                    // 3. INICIAR EL MICROFONO REAL
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     ctx = new AudioContext({ latencyHint: 'interactive', sampleRate: 48000 });
                     
@@ -219,57 +240,99 @@
                     midFilter = ctx.createBiquadFilter(); midFilter.type = "peaking"; midFilter.frequency.value = 1500; midFilter.Q.value = 1;
                     trebleFilter = ctx.createBiquadFilter(); trebleFilter.type = "highshelf"; trebleFilter.frequency.value = 3000;
 
+                    // --- CONFIGURACIÓN DEL COMPRESOR ---
+                    compressorNode = ctx.createDynamicsCompressor();
+                    compressorNode.threshold.value = -20; // Empieza a actuar a -20dB
+                    compressorNode.knee.value = 30;       // Curva suave
+                    compressorNode.ratio.value = 12;      // Compresión fuerte para picos
+                    compressorNode.attack.value = 0.003;  // Reacción instantánea
+                    compressorNode.release.value = 0.25;  // Vuelta rápida a la normalidad
+
+                    // CADENA DE AUDIO
+                    // Source -> EQ -> Compresor -> Volumen -> Salida
                     source.connect(bassFilter);
                     bassFilter.connect(midFilter);
                     midFilter.connect(trebleFilter);
-                    trebleFilter.connect(gainNode);
-                    gainNode.connect(ctx.destination);
+                    
+                    // Conexión dinámica (con o sin compresor)
+                    connectChain();
 
                     updateAudioSystem();
-                    toggleWakeLock(); // Intentar mantener pantalla si el usuario quiere
+                    toggleWakeLock();
+                    monitorCompression(); // Iniciar visualizador
 
                     isOn = true;
                     btn.innerText = "ON";
                     btn.classList.add('on');
                 } catch (e) { alert("Error: " + e.message); }
             } else {
-                // APAGAR
                 if (ctx) ctx.close();
-                silentAudio.pause(); // Parar el truco
+                silentAudio.pause();
                 silentAudio.currentTime = 0;
-                releaseWakeLock(); // Soltar pantalla
+                releaseWakeLock();
+                cancelAnimationFrame(animationId); // Parar visualizador
+                compLed.classList.remove('active');
                 isOn = false;
                 btn.innerText = "OFF";
                 btn.classList.remove('on');
             }
         });
 
-        // --- MANTENER PANTALLA ENCENDIDA (Wake Lock API) ---
-        async function toggleWakeLock() {
-            if (chkWakeLock.checked && isOn) {
-                try {
-                    if ('wakeLock' in navigator) {
-                        wakeLock = await navigator.wakeLock.request('screen');
-                    }
-                } catch (err) { console.log(err); }
+        // Función para reconectar cables si apagamos/prendemos el compresor
+        function connectChain() {
+            if(!ctx) return;
+            // Desconectar todo primero (limpieza)
+            trebleFilter.disconnect();
+            compressorNode.disconnect();
+            
+            if (chkCompressor.checked) {
+                // RUTA A: CON COMPRESOR
+                trebleFilter.connect(compressorNode);
+                compressorNode.connect(gainNode);
+                compStatus.innerText = "Protección Auditiva ACTIVA";
+                compStatus.style.color = "#00d2ff";
             } else {
-                releaseWakeLock();
+                // RUTA B: SIN COMPRESOR (Sonido crudo)
+                trebleFilter.connect(gainNode);
+                compStatus.innerText = "Protección DESACTIVADA";
+                compStatus.style.color = "#666";
+                compLed.classList.remove('active');
             }
+            gainNode.connect(ctx.destination);
         }
 
-        function releaseWakeLock() {
-            if (wakeLock) {
-                wakeLock.release();
-                wakeLock = null;
-            }
-        }
-
-        chkWakeLock.addEventListener('change', () => {
+        chkCompressor.addEventListener('change', () => {
+            connectChain();
             saveToMemory(null);
-            toggleWakeLock();
         });
 
-        // --- EVENTOS SLIDERS ---
+        // --- VISUALIZADOR DE REDUCCIÓN (LED) ---
+        function monitorCompression() {
+            if (!isOn || !chkCompressor.checked) return;
+            
+            // El nodo compresor tiene un valor llamado 'reduction'
+            // Nos dice cuántos decibeles está bajando el volumen
+            const reduction = compressorNode.reduction; 
+            
+            // Si la reducción es fuerte (ej. más de -1dB), encender LED
+            if (reduction < -1.0) {
+                compLed.classList.add('active');
+            } else {
+                compLed.classList.remove('active');
+            }
+            
+            animationId = requestAnimationFrame(monitorCompression);
+        }
+
+        // --- WAKE LOCK Y UTILS ---
+        async function toggleWakeLock() {
+            if (chkWakeLock.checked && isOn) {
+                try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+            } else { releaseWakeLock(); }
+        }
+        function releaseWakeLock() { if (wakeLock) { wakeLock.release(); wakeLock = null; } }
+        chkWakeLock.addEventListener('change', () => { saveToMemory(null); toggleWakeLock(); });
+
         function updateAudioSystem() {
             ui.vol.label.innerText = ui.vol.input.value + "x";
             ui.bass.label.innerText = (ui.bass.input.value > 0 ? "+" : "") + ui.bass.input.value + " dB";
@@ -299,12 +362,8 @@
                 saveToMemory(null);
             });
         });
-
-        // Reintentar WakeLock si la app vuelve de segundo plano
         document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-                toggleWakeLock();
-            }
+            if (wakeLock !== null && document.visibilityState === 'visible') toggleWakeLock();
         });
     </script>
 </body>
