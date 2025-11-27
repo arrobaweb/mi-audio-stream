@@ -3,93 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 10.0 (Puro)</title>
+    <title>Super Oído 11.0</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { 
-            font-family: 'Segoe UI', sans-serif; text-align: center; 
+            font-family: monospace; text-align: center; 
             background-color: #000; color: #fff; 
-            padding: 10px; margin: 0; user-select: none;
-            padding-bottom: 50px;
+            padding: 15px; margin: 0; user-select: none;
+            padding-bottom: 60px;
         }
-        h1 { color: #00d2ff; margin: 10px 0; font-size: 18px; text-transform: uppercase; }
+        h1 { color: #0f0; margin: 10px 0; font-size: 20px; }
 
-        /* VISUALIZADOR */
+        /* VISUALIZADOR GRANDE */
         .viz-container {
-            width: 100%; height: 100px; background: #111;
-            border: 1px solid #333; margin-bottom: 15px;
-            border-radius: 8px; overflow: hidden;
+            width: 100%; height: 120px; 
+            background: #111; border: 2px solid #333;
+            margin-bottom: 20px; border-radius: 10px;
+            position: relative;
         }
-        canvas { width: 100%; height: 100%; display: block; }
+        canvas { display: block; width: 100%; height: 100%; }
 
-        /* LED */
-        .led {
-            width: 10px; height: 10px; border-radius: 50%;
-            background: #333; margin: 0 auto 20px auto;
-            border: 1px solid #555; transition: 0.1s;
-        }
-        .led.active { background: #f00; box-shadow: 0 0 10px #f00; border-color: #fff;}
-
-        /* POWER BUTTON */
+        /* CONTROLES */
         #btnPower {
-            width: 90px; height: 90px; border-radius: 50%; border: 3px solid #333;
-            background: #222; color: #666; font-size: 16px; font-weight: bold; cursor: pointer;
-            margin: 0 auto 20px auto; display: flex; align-items: center; justify-content: center;
+            width: 100px; height: 100px; border-radius: 50%; border: 4px solid #333;
+            background: #222; color: #888; font-size: 18px; font-weight: bold; cursor: pointer;
+            margin: 0 auto 30px auto; display: flex; align-items: center; justify-content: center;
         }
-        #btnPower.on { background: #00d2ff; color: #000; border-color: #fff; box-shadow: 0 0 30px #00d2ff; }
+        #btnPower.on { 
+            background: #0f0; color: #000; 
+            border-color: #fff; box-shadow: 0 0 40px #0f0; 
+        }
 
-        /* PANELES */
-        .panel { background: #1a1a1a; border-radius: 12px; padding: 15px; margin-bottom: 10px; border: 1px solid #333; }
-        input[type=range] { width: 100%; margin: 10px 0; accent-color: #00d2ff; }
-        .labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; }
+        .panel { 
+            background: #222; border: 1px solid #444; 
+            padding: 15px; border-radius: 10px; margin-bottom: 10px; 
+        }
+        input[type=range] { width: 100%; height: 10px; accent-color: #0f0; margin-top: 10px; }
         
-        .status { font-size: 10px; color: #444; margin-top: 20px;}
+        .debug-text { color: #555; font-size: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <h1>Super Oído 10.0</h1>
+    <h1>Super Oído 11.0</h1>
     
     <div class="viz-container">
         <canvas id="visualizer"></canvas>
     </div>
-    
-    <div class="led" id="compLed"></div>
 
     <div id="btnPower">OFF</div>
 
     <div class="panel">
-        <div class="labels"><span>Volumen</span><span id="volText" style="color:#00d2ff">1.0</span></div>
+        <div>VOLUMEN MAESTRO</div>
         <input type="range" id="volControl" min="1" max="20" step="0.5" value="1">
     </div>
 
     <div class="panel">
-        <div class="labels"><span>Agudos (Claridad)</span><span>EQ</span></div>
+        <div>FILTRO AGUDOS</div>
         <input type="range" id="trebleControl" min="-10" max="10" step="1" value="0">
     </div>
 
-    <div class="status" id="statusText">Esperando inicio...</div>
+    <div class="debug-text" id="statusInfo">Esperando...</div>
 
     <script>
-        let ctx, source, gainNode, analyser, compressor, trebleFilter;
+        let ctx, source, gainNode, analyser, trebleFilter;
         let isOn = false;
         let animationId;
 
         const canvas = document.getElementById('visualizer');
         const canvasCtx = canvas.getContext('2d');
         const container = document.querySelector('.viz-container');
-        
         const btn = document.getElementById('btnPower');
+        const statusInfo = document.getElementById('statusInfo');
         const volControl = document.getElementById('volControl');
         const trebleControl = document.getElementById('trebleControl');
-        const volText = document.getElementById('volText');
-        const statusText = document.getElementById('statusText');
-        const compLed = document.getElementById('compLed');
 
-        // Ajustar Canvas
+        // --- ARREGLO DE RESOLUCIÓN (DPI FIX) ---
         function resizeCanvas() {
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
+            // Obtenemos la densidad de píxeles del celular (ej. 2x, 3x)
+            const dpr = window.devicePixelRatio || 1;
+            
+            // Ajustamos el tamaño real del canvas multiplicando por la densidad
+            canvas.width = container.clientWidth * dpr;
+            canvas.height = container.clientHeight * dpr;
+            
+            // Normalizamos el contexto para que use coordenadas lógicas
+            canvasCtx.scale(dpr, dpr);
+            
+            // Guardamos el tamaño lógico para dibujar luego
+            canvas.logicalWidth = container.clientWidth;
+            canvas.logicalHeight = container.clientHeight;
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
@@ -97,55 +100,49 @@
         btn.addEventListener('click', async () => {
             if (!isOn) {
                 try {
-                    // 1. Contexto de Audio LIMPIO (Sin forzar sampleRate)
-                    // Dejamos que el navegador elija la velocidad nativa del celular
+                    // 1. AudioContext LIMPIO (Sin latencyHint para evitar sonido robótico)
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    ctx = new AudioContext({ latencyHint: 'interactive' });
+                    ctx = new AudioContext(); 
                     
-                    statusText.innerText = "Frecuencia Nativa: " + ctx.sampleRate + "Hz";
+                    // Forzar inicio en móviles
+                    if (ctx.state === 'suspended') {
+                        await ctx.resume();
+                    }
 
-                    // 2. Micrófono SIN PROCESAMIENTO EXTRA
-                    // A veces 'echoCancellation' causa el sonido robótico
+                    statusInfo.innerText = "Motor: " + ctx.state + " | " + ctx.sampleRate + "Hz";
+
                     const stream = await navigator.mediaDevices.getUserMedia({
-                        audio: { 
-                            echoCancellation: false, 
-                            noiseSuppression: false, 
-                            autoGainControl: false 
-                        }
+                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                     });
 
                     source = ctx.createMediaStreamSource(stream);
 
-                    // 3. Cadena Simple: EQ -> Volumen -> Compresor -> Analizador -> Salida
+                    // 2. Nodos
+                    analyser = ctx.createAnalyser();
+                    analyser.fftSize = 2048; // Tamaño del buffer de análisis
+
                     trebleFilter = ctx.createBiquadFilter();
                     trebleFilter.type = "highshelf";
                     trebleFilter.frequency.value = 3000;
-                    
+
                     gainNode = ctx.createGain();
-                    
-                    compressor = ctx.createDynamicsCompressor();
-                    compressor.threshold.value = -30;
-                    compressor.ratio.value = 12;
 
-                    analyser = ctx.createAnalyser();
-                    analyser.fftSize = 2048;
-
+                    // Conexión: Source -> EQ -> Volumen -> Analizador -> Salida
                     source.connect(trebleFilter);
                     trebleFilter.connect(gainNode);
-                    gainNode.connect(compressor);
-                    compressor.connect(analyser);
+                    gainNode.connect(analyser);
                     analyser.connect(ctx.destination);
 
-                    drawVisualizer();
-                    monitorCompressor();
-                    
+                    // 3. Iniciar Visualizador
+                    resizeCanvas(); // Asegurar tamaño
+                    drawWaveform();
+
                     isOn = true;
                     btn.innerText = "ON";
                     btn.classList.add('on');
 
                 } catch (e) {
                     alert("Error: " + e.message);
-                    statusText.innerText = "Error: " + e.message;
                 }
             } else {
                 if(ctx) ctx.close();
@@ -153,57 +150,47 @@
                 isOn = false;
                 btn.innerText = "OFF";
                 btn.classList.remove('on');
-                // Limpiar visualizador
-                canvasCtx.clearRect(0,0,canvas.width, canvas.height);
-                compLed.classList.remove('active');
+                // Limpiar pantalla
+                canvasCtx.clearRect(0, 0, canvas.logicalWidth, canvas.logicalHeight);
             }
         });
 
-        function drawVisualizer() {
+        function drawWaveform() {
             if(!isOn) return;
-            animationId = requestAnimationFrame(drawVisualizer);
+            animationId = requestAnimationFrame(drawWaveform);
 
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteTimeDomainData(dataArray);
 
+            // Limpiar fondo
             canvasCtx.fillStyle = '#000';
-            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-            canvasCtx.lineWidth = 2;
-            canvasCtx.strokeStyle = '#00d2ff';
+            canvasCtx.fillRect(0, 0, canvas.logicalWidth, canvas.logicalHeight);
+
+            // Configurar Línea
+            canvasCtx.lineWidth = 4; // <--- LÍNEA GRUESA
+            canvasCtx.strokeStyle = '#00ff00'; // VERDE FLUORESCENTE
             canvasCtx.beginPath();
 
-            const sliceWidth = canvas.width * 1.0 / bufferLength;
+            const sliceWidth = canvas.logicalWidth * 1.0 / bufferLength;
             let x = 0;
 
             for(let i = 0; i < bufferLength; i++) {
                 const v = dataArray[i] / 128.0;
-                const y = v * canvas.height / 2;
+                const y = v * canvas.logicalHeight / 2;
+
                 if(i === 0) canvasCtx.moveTo(x, y);
                 else canvasCtx.lineTo(x, y);
+
                 x += sliceWidth;
             }
-            canvasCtx.lineTo(canvas.width, canvas.height / 2);
+            canvasCtx.lineTo(canvas.logicalWidth, canvas.logicalHeight / 2);
             canvasCtx.stroke();
         }
 
-        function monitorCompressor() {
-            if(!isOn) return;
-            const reduction = compressor.reduction; // valor negativo dB
-            // Si reduce más de 1dB, prender LED
-            if(reduction <= -1.0) compLed.classList.add('active');
-            else compLed.classList.remove('active');
-            requestAnimationFrame(monitorCompressor);
-        }
-
-        // Controles simples
-        volControl.addEventListener('input', () => {
-            if(gainNode) gainNode.gain.value = volControl.value;
-            volText.innerText = volControl.value;
-        });
-        trebleControl.addEventListener('input', () => {
-            if(trebleFilter) trebleFilter.gain.value = trebleControl.value;
-        });
+        // Controles
+        volControl.addEventListener('input', () => { if(gainNode) gainNode.gain.value = volControl.value; });
+        trebleControl.addEventListener('input', () => { if(trebleFilter) trebleFilter.gain.value = trebleControl.value; });
 
     </script>
 </body>
