@@ -3,177 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 13.0 (Split)</title>
+    <title>Super Oído 15.0 Ultimate</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { 
-            font-family: monospace; text-align: center; 
-            background-color: #000; color: #fff; 
+            font-family: 'Segoe UI', sans-serif; text-align: center; 
+            background-color: #050505; color: #fff; 
             padding: 15px; margin: 0; user-select: none;
-            padding-bottom: 60px;
+            padding-bottom: 80px;
         }
-        h1 { color: #00ff00; margin: 10px 0; font-size: 18px; }
-
-        /* VISUALIZADOR */
-        .viz-container {
-            width: 100%; height: 120px; 
-            background: #111; border: 1px solid #444;
-            margin-bottom: 20px; border-radius: 8px;
-            position: relative;
-        }
-        canvas { display: block; width: 100%; height: 100%; }
-        
-        #debugVal {
-            position: absolute; top: 5px; left: 5px;
-            color: #00ff00; font-size: 14px; font-weight: bold;
-            background: rgba(0,0,0,0.8); padding: 5px;
+        h1 { 
+            color: #00ffcc; margin: 10px 0; font-size: 18px; 
+            text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,255,204,0.5);
         }
 
-        /* POWER BTN */
+        /* --- VISUALIZADOR VÚMETRO --- */
+        .meter-container {
+            width: 100%; height: 30px; 
+            background: #111; border: 1px solid #333;
+            border-radius: 5px; margin-bottom: 20px;
+            overflow: hidden; position: relative;
+            box-shadow: inset 0 0 10px #000;
+        }
+        .meter-bar {
+            width: 0%; height: 100%;
+            background: linear-gradient(90deg, #00ff00 60%, #ffff00 80%, #ff0000 100%);
+            transition: width 0.08s ease-out;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+
+        /* --- CONTROLES PRINCIPALES --- */
+        .main-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
+
         #btnPower {
-            width: 100px; height: 100px; border-radius: 50%; border: 4px solid #333;
-            background: #222; color: #888; font-size: 18px; font-weight: bold; cursor: pointer;
-            margin: 0 auto 30px auto; display: flex; align-items: center; justify-content: center;
+            width: 90px; height: 90px; border-radius: 50%; border: 3px solid #333;
+            background: #1a1a1a; color: #666; font-size: 16px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 20px #000; transition: 0.3s;
         }
         #btnPower.on { 
-            background: #00ff00; color: #000; 
-            border-color: #fff; box-shadow: 0 0 30px #00ff00; 
+            background: #00ffcc; color: #000; border-color: #fff; 
+            box-shadow: 0 0 30px #00ffcc; transform: scale(1.05);
         }
 
-        .panel { 
-            background: #1a1a1a; border-radius: 10px; padding: 15px; margin-bottom: 10px; 
+        #btnRec {
+            width: 50px; height: 50px; border-radius: 50%; border: 2px solid #333;
+            background: #1a1a1a; color: #cc0000; font-size: 20px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
-        input[type=range] { width: 100%; height: 15px; accent-color: #00ff00; margin-top: 10px; }
+        #btnRec.recording { background: #cc0000; color: #fff; animation: pulse 1s infinite; border-color: #fff; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* --- PRESETS --- */
+        .preset-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
+        .preset-btn {
+            background: #1a1a1a; border: 1px solid #333; color: #888; padding: 10px 0;
+            border-radius: 8px; font-size: 12px; cursor: pointer; transition: 0.2s;
+        }
+        .preset-btn.active {
+            background: #00ffcc; color: #000; font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.4); border-color: #fff;
+        }
+
+        /* --- PANELES --- */
+        .panel { background: #161616; border-radius: 12px; padding: 15px; margin-bottom: 10px; border: 1px solid #2a2a2a; }
+        .label-group { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #888;}
+        .label-val { color: #00ffcc; font-weight: bold; font-family: monospace; }
+
+        input[type=range] { width: 100%; height: 8px; border-radius: 5px; background: #333; outline: none; margin-bottom: 10px; accent-color: #00ffcc; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #00ffcc; cursor: pointer; border: 2px solid #000; }
         
-        .status { font-size: 11px; color: #555; margin-top: 15px; }
+        /* Footer */
+        .footer { font-size: 11px; color: #555; margin-top: 20px; display: flex; justify-content: space-around; }
+        input[type=checkbox] { accent-color: #00ffcc; transform: scale(1.2); }
     </style>
 </head>
 <body>
 
-    <h1>Super Oído 13.0</h1>
-    
-    <div class="viz-container">
-        <div id="debugVal">OFF</div>
-        <canvas id="visualizer"></canvas>
+    <h1>Super Oído 15.0</h1>
+
+    <div class="meter-container">
+        <div class="meter-bar" id="audioMeter"></div>
     </div>
 
-    <div id="btnPower">OFF</div>
+    <div class="main-controls">
+        <div id="btnPower">OFF</div>
+        <div id="btnRec">●</div>
+    </div>
+
+    <div class="preset-container">
+        <button class="preset-btn active" onclick="loadPreset('general')">General</button>
+        <button class="preset-btn" onclick="loadPreset('voz')">🗣️ Voz</button>
+        <button class="preset-btn" onclick="loadPreset('cine')">🎬 Cine</button>
+        <button class="preset-btn" onclick="loadPreset('calle')">🚦 Calle</button>
+    </div>
 
     <div class="panel">
-        <div>VOLUMEN</div>
-        <input type="range" id="volControl" min="1" max="20" step="0.5" value="1">
+        <div class="label-group"><span>VOLUMEN</span><span class="label-val" id="volVal">1.0x</span></div>
+        <input type="range" id="volControl" min="1" max="30" step="0.5" value="1">
+        
+        <div class="label-group" style="margin-top:10px;"><span>BALANCE L / R</span></div>
+        <input type="range" id="balControl" min="-1" max="1" step="0.1" value="0">
     </div>
 
-    <div class="status" id="statusText">Esperando...</div>
+    <div class="panel">
+        <div class="label-group"><span>EQ (Bajos / Medios / Agudos)</span></div>
+        <input type="range" id="bassControl" min="-20" max="20" step="1" value="0">
+        <input type="range" id="midControl" min="-20" max="20" step="1" value="0">
+        <input type="range" id="trebleControl" min="-20" max="20" step="1" value="0">
+    </div>
+
+    <div class="footer">
+        <label><input type="checkbox" id="chkCompressor" checked> 🛡️ Compresor</label>
+        <label><input type="checkbox" id="chkWakeLock"> 💡 Pantalla ON</label>
+    </div>
 
     <script>
-        let ctx, source, gainNode, analyser;
+        let ctx, source, gainNode, pannerNode, analyser, compressor;
+        let bassFilter, midFilter, trebleFilter;
+        let mediaRecorder, destStream;
+        let chunks = [];
         let isOn = false;
+        let isRecording = false;
+        let wakeLock = null;
         let animationId;
 
-        const canvas = document.getElementById('visualizer');
-        const canvasCtx = canvas.getContext('2d');
-        const container = document.querySelector('.viz-container');
+        // --- PRESETS (Configuraciones guardadas) ---
+        const PRESETS = {
+            'general': { vol: 2, bass: 0, mid: 0, treble: -2 },
+            'voz':     { vol: 5, bass: -12, mid: 8, treble: 2 },
+            'cine':    { vol: 4, bass: 6, mid: 0, treble: 4 },
+            'calle':   { vol: 6, bass: -15, mid: 5, treble: 5 }
+        };
+
         const btn = document.getElementById('btnPower');
-        const debugVal = document.getElementById('debugVal');
-        const statusText = document.getElementById('statusText');
-        const volControl = document.getElementById('volControl');
+        const btnRec = document.getElementById('btnRec');
+        const audioMeter = document.getElementById('audioMeter');
+        const chkWakeLock = document.getElementById('chkWakeLock');
+        const chkCompressor = document.getElementById('chkCompressor');
 
-        // Ajustar tamaño real
-        function resize() {
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
+        const ui = {
+            vol: document.getElementById('volControl'), volVal: document.getElementById('volVal'),
+            bal: document.getElementById('balControl'),
+            bass: document.getElementById('bassControl'),
+            mid: document.getElementById('midControl'),
+            treble: document.getElementById('trebleControl')
+        };
 
+        // --- MEMORIA (Cargar al inicio) ---
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('superOido15_Settings');
+            if (saved) {
+                const config = JSON.parse(saved);
+                applyConfigToUI(config);
+                if(config.lastPreset) highlightButton(config.lastPreset);
+                if(config.keepScreenOn) chkWakeLock.checked = true;
+                if(config.compressor !== undefined) chkCompressor.checked = config.compressor;
+            }
+        });
+
+        // --- AUDIO ENGINE ---
         btn.addEventListener('click', async () => {
             if (!isOn) {
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    ctx = new AudioContext(); 
-                    
-                    statusText.innerText = "Iniciando...";
+                    ctx = new AudioContext({ latencyHint: 'interactive' }); // Latencia baja pero estable
 
                     const stream = await navigator.mediaDevices.getUserMedia({
                         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                     });
 
+                    // 1. Crear Nodos
                     source = ctx.createMediaStreamSource(stream);
                     
-                    // --- CABLE 1: AUDIO (Oídos) ---
+                    bassFilter = ctx.createBiquadFilter(); bassFilter.type = "lowshelf"; bassFilter.frequency.value = 250; 
+                    midFilter = ctx.createBiquadFilter(); midFilter.type = "peaking"; midFilter.frequency.value = 1500; midFilter.Q.value = 1;
+                    trebleFilter = ctx.createBiquadFilter(); trebleFilter.type = "highshelf"; trebleFilter.frequency.value = 3000;
+
+                    pannerNode = ctx.createStereoPanner();
                     gainNode = ctx.createGain();
-                    source.connect(gainNode);
-                    gainNode.connect(ctx.destination);
+                    
+                    compressor = ctx.createDynamicsCompressor();
+                    compressor.threshold.value = -30;
+                    compressor.ratio.value = 12;
 
-                    // --- CABLE 2: VISUALIZADOR (Ojos) ---
-                    // Conectamos el source TAMBIÉN al analizador por separado
+                    // Analizador para la barra visual
                     analyser = ctx.createAnalyser();
-                    analyser.fftSize = 256; // (Baja resolución para que sea rápido y compatible)
-                    source.connect(analyser);
+                    analyser.fftSize = 256;
+                    analyser.smoothingTimeConstant = 0.5;
 
-                    // Iniciar Dibujo
-                    resize();
-                    drawLoop();
+                    destStream = ctx.createMediaStreamDestination();
+
+                    // 2. CONECTAR CADENA
+                    // Mic -> EQ -> Balance -> Gain -> (Compresor) -> Out
+                    source.connect(bassFilter);
+                    bassFilter.connect(midFilter);
+                    midFilter.connect(trebleFilter);
+                    trebleFilter.connect(pannerNode);
+                    pannerNode.connect(gainNode);
+                    
+                    connectChain(); // Maneja salida y grabadora
+                    
+                    // Visualizador siempre conectado al Gain (pre-salida)
+                    gainNode.connect(analyser);
+
+                    updateAudio();
+                    toggleWakeLock();
+                    drawMeter(); // Iniciar animación visual
 
                     isOn = true;
                     btn.innerText = "ON";
                     btn.classList.add('on');
-                    statusText.innerText = "Sistema Activo | " + ctx.sampleRate + "Hz";
 
-                } catch (e) {
-                    alert("Error: " + e.message);
-                }
+                } catch (e) { alert("Error: " + e.message); }
             } else {
-                if(ctx) ctx.close();
-                cancelAnimationFrame(animationId);
-                isOn = false;
-                btn.innerText = "OFF";
-                btn.classList.remove('on');
-                canvasCtx.clearRect(0,0,canvas.width, canvas.height);
-                debugVal.innerText = "OFF";
+                stopAll();
             }
         });
 
-        function drawLoop() {
-            if(!isOn) return;
-            animationId = requestAnimationFrame(drawLoop);
-
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
+        function connectChain() {
+            if(!ctx) return;
+            gainNode.disconnect();
+            compressor.disconnect();
             
-            // Obtener datos de la onda
-            analyser.getByteTimeDomainData(dataArray);
-
-            // 1. DATO NUMÉRICO (Debe oscilar entre 0 y 255)
-            // Si está en 128 es silencio. Si cambia, hay sonido.
-            debugVal.innerText = "Dato: " + dataArray[0];
-
-            // 2. DIBUJAR
-            canvasCtx.fillStyle = '#111';
-            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-            canvasCtx.lineWidth = 3;
-            canvasCtx.strokeStyle = '#00ff00';
-            canvasCtx.beginPath();
-
-            const sliceWidth = canvas.width * 1.0 / bufferLength;
-            let x = 0;
-
-            for(let i = 0; i < bufferLength; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * canvas.height / 2;
-
-                if(i === 0) canvasCtx.moveTo(x, y);
-                else canvasCtx.lineTo(x, y);
-
-                x += sliceWidth;
+            if(chkCompressor.checked) {
+                gainNode.connect(compressor);
+                compressor.connect(ctx.destination);
+                compressor.connect(destStream);
+            } else {
+                gainNode.connect(ctx.destination);
+                gainNode.connect(destStream);
             }
-            canvasCtx.lineTo(canvas.width, canvas.height / 2);
-            canvasCtx.stroke();
+            gainNode.connect(analyser); // Reconectar visualizador
         }
 
-        volControl.addEventListener('input', () => { if(gainNode) gainNode.gain.value = volControl.value; });
+        // --- VISUALIZADOR BARRA ---
+        function drawMeter() {
+            if(!isOn) return;
+            animationId = requestAnimationFrame(drawMeter);
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for(let i = 0; i < bufferLength; i++) sum += dataArray[i];
+            let percent = (sum / bufferLength) * 2.5; 
+            if(percent > 100) percent = 100;
+            audioMeter.style.width = percent + "%";
+        }
+
+        function stopAll() {
+            if (ctx) ctx.close();
+            if (isRecording) stopRec();
+            cancelAnimationFrame(animationId);
+            releaseWakeLock();
+            isOn = false;
+            btn.innerText = "OFF";
+            btn.classList.remove('on');
+            audioMeter.style.width = "0%";
+        }
+
+        // --- FUNCIONES UI Y MEMORIA ---
+        function updateAudio() {
+            ui.volVal.innerText = ui.vol.value + "x";
+            if(!isOn) return;
+            gainNode.gain.value = ui.vol.value;
+            pannerNode.pan.value = ui.bal.value;
+            bassFilter.gain.value = ui.bass.value;
+            midFilter.gain.value = ui.mid.value;
+            trebleFilter.gain.value = ui.treble.value;
+        }
+
+        function loadPreset(name) {
+            const p = PRESETS[name];
+            ui.vol.value = p.vol; ui.bass.value = p.bass; ui.mid.value = p.mid; ui.treble.value = p.treble;
+            updateAudio();
+            highlightButton(name);
+            saveToMemory(name);
+        }
+
+        function highlightButton(name) {
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            const map = {'general':0, 'voz':1, 'cine':2, 'calle':3};
+            const btns = document.querySelectorAll('.preset-btn');
+            if(btns[map[name]]) btns[map[name]].classList.add('active');
+        }
+
+        function saveToMemory(presetName) {
+            const config = {
+                vol: ui.vol.value, bal: ui.bal.value,
+                bass: ui.bass.value, mid: ui.mid.value, treble: ui.treble.value,
+                lastPreset: presetName || 'custom',
+                keepScreenOn: chkWakeLock.checked,
+                compressor: chkCompressor.checked
+            };
+            localStorage.setItem('superOido15_Settings', JSON.stringify(config));
+        }
+
+        function applyConfigToUI(config) {
+            ui.vol.value = config.vol; ui.bal.value = config.bal || 0;
+            ui.bass.value = config.bass; ui.mid.value = config.mid; ui.treble.value = config.treble;
+            updateAudio();
+        }
+
+        // Event Listeners
+        [ui.vol, ui.bal, ui.bass, ui.mid, ui.treble].forEach(el => el.addEventListener('input', () => {
+            updateAudio(); saveToMemory(null); highlightButton(null);
+        }));
+        chkCompressor.addEventListener('change', () => { connectChain(); saveToMemory(null); });
+
+        // --- GRABADORA ---
+        btnRec.addEventListener('click', () => {
+            if(!isOn) return;
+            if(!isRecording) {
+                chunks = [];
+                mediaRecorder = new MediaRecorder(destStream.stream);
+                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { 'type' : 'audio/webm; codecs=opus' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.style.display='none'; a.href=url;
+                    const d = new Date();
+                    a.download = `SuperOido_${d.getHours()}-${d.getMinutes()}.webm`; 
+                    document.body.appendChild(a); a.click();
+                    window.URL.revokeObjectURL(url);
+                };
+                mediaRecorder.start();
+                isRecording = true;
+                btnRec.classList.add('recording');
+            } else {
+                stopRec();
+            }
+        });
+        function stopRec() {
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+            isRecording = false;
+            btnRec.classList.remove('recording');
+        }
+
+        // Wake Lock
+        async function toggleWakeLock() { if (chkWakeLock.checked && isOn && 'wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); else if(wakeLock) releaseWakeLock(); }
+        function releaseWakeLock() { if (wakeLock) { wakeLock.release(); wakeLock = null; } }
+        chkWakeLock.addEventListener('change', () => { saveToMemory(null); toggleWakeLock(); });
+        document.addEventListener('visibilitychange', async () => { if (wakeLock !== null && document.visibilityState === 'visible') toggleWakeLock(); });
 
     </script>
 </body>
