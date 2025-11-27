@@ -3,185 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 9.0 Fix</title>
+    <title>Super Oído 10.0 (Puro)</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { 
-            font-family: monospace; text-align: center; 
-            background-color: #000; color: #0f0; 
+            font-family: 'Segoe UI', sans-serif; text-align: center; 
+            background-color: #000; color: #fff; 
             padding: 10px; margin: 0; user-select: none;
-            padding-bottom: 80px;
+            padding-bottom: 50px;
         }
-        h1 { color: #0f0; margin: 5px 0; font-size: 16px; text-transform: uppercase; }
+        h1 { color: #00d2ff; margin: 10px 0; font-size: 18px; text-transform: uppercase; }
 
-        /* --- VISUALIZADOR --- */
-        canvas {
-            width: 100%; height: 100px; 
-            background: #111; border: 1px solid #333;
-            margin-bottom: 15px; display: block;
+        /* VISUALIZADOR */
+        .viz-container {
+            width: 100%; height: 100px; background: #111;
+            border: 1px solid #333; margin-bottom: 15px;
+            border-radius: 8px; overflow: hidden;
         }
+        canvas { width: 100%; height: 100%; display: block; }
 
-        /* --- CONTROLES --- */
-        .main-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
+        /* LED */
+        .led {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #333; margin: 0 auto 20px auto;
+            border: 1px solid #555; transition: 0.1s;
+        }
+        .led.active { background: #f00; box-shadow: 0 0 10px #f00; border-color: #fff;}
 
+        /* POWER BUTTON */
         #btnPower {
-            width: 80px; height: 80px; border-radius: 50%; border: 2px solid #333;
-            background: #222; color: #666; font-size: 14px; font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            width: 90px; height: 90px; border-radius: 50%; border: 3px solid #333;
+            background: #222; color: #666; font-size: 16px; font-weight: bold; cursor: pointer;
+            margin: 0 auto 20px auto; display: flex; align-items: center; justify-content: center;
         }
-        #btnPower.on { background: #0f0; color: #000; box-shadow: 0 0 20px #0f0; border-color: #fff;}
+        #btnPower.on { background: #00d2ff; color: #000; border-color: #fff; box-shadow: 0 0 30px #00d2ff; }
 
-        #btnRec {
-            width: 50px; height: 50px; border-radius: 50%; border: 1px solid #333;
-            background: #222; color: #f00; font-size: 20px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
-        #btnRec.recording { background: #f00; color: #fff; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        /* --- BOTONERA PRESETS --- */
-        .preset-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; }
-        .preset-btn { background: #111; border: 1px solid #333; color: #666; padding: 10px; cursor: pointer; }
-        .preset-btn.active { background: #0f0; color: #000; font-weight: bold; }
-
-        /* --- PANELES --- */
-        .panel { background: #111; border: 1px solid #333; padding: 10px; margin-bottom: 10px; }
-        input[type=range] { width: 100%; accent-color: #0f0; margin: 10px 0; }
+        /* PANELES */
+        .panel { background: #1a1a1a; border-radius: 12px; padding: 15px; margin-bottom: 10px; border: 1px solid #333; }
+        input[type=range] { width: 100%; margin: 10px 0; accent-color: #00d2ff; }
+        .labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; }
         
-        /* --- BOTÓN REPARAR --- */
-        #btnFix {
-            background: #333; color: #fff; border: 1px solid #fff; padding: 8px 20px;
-            margin-top: 20px; cursor: pointer; font-family: monospace;
-        }
-
-        .status-text { font-size: 10px; color: #666; margin-bottom: 5px; display: block;}
+        .status { font-size: 10px; color: #444; margin-top: 20px;}
     </style>
 </head>
 <body>
 
-    <h1>Super Oído 9.0</h1>
-    <span id="hzDisplay" class="status-text">Sistema en espera...</span>
-
-    <canvas id="visualizer"></canvas>
+    <h1>Super Oído 10.0</h1>
     
-    <div class="main-controls">
-        <div id="btnPower">OFF</div>
-        <div id="btnRec">●</div>
+    <div class="viz-container">
+        <canvas id="visualizer"></canvas>
     </div>
     
-    <div class="preset-container">
-        <button class="preset-btn active" onclick="loadPreset('general')">General</button>
-        <button class="preset-btn" onclick="loadPreset('voz')">Voz</button>
-        <button class="preset-btn" onclick="loadPreset('cine')">Cine</button>
-        <button class="preset-btn" onclick="loadPreset('calle')">Calle</button>
+    <div class="led" id="compLed"></div>
+
+    <div id="btnPower">OFF</div>
+
+    <div class="panel">
+        <div class="labels"><span>Volumen</span><span id="volText" style="color:#00d2ff">1.0</span></div>
+        <input type="range" id="volControl" min="1" max="20" step="0.5" value="1">
     </div>
 
     <div class="panel">
-        <div>VOLUMEN: <span id="volVal">1.0</span></div>
-        <input type="range" id="volControl" min="1" max="30" step="0.5" value="1">
-        
-        <div>BALANCE L/R</div>
-        <input type="range" id="balControl" min="-1" max="1" step="0.1" value="0">
+        <div class="labels"><span>Agudos (Claridad)</span><span>EQ</span></div>
+        <input type="range" id="trebleControl" min="-10" max="10" step="1" value="0">
     </div>
 
-    <div class="panel">
-        <div>EQ (Bajos / Medios / Agudos)</div>
-        <input type="range" id="bassControl" min="-20" max="20" step="1" value="0">
-        <input type="range" id="midControl" min="-20" max="20" step="1" value="0">
-        <input type="range" id="trebleControl" min="-20" max="20" step="1" value="0">
-    </div>
-
-    <button id="btnFix" onclick="toggleSampleRate()">🛠️ REPARAR AUDIO (Borracho)</button>
-    
-    <br><br>
-    <label style="color:#666; font-size:12px;">
-        <input type="checkbox" id="chkCompressor" checked> Compresor
-    </label>
-    <label style="color:#666; font-size:12px; margin-left: 15px;">
-        <input type="checkbox" id="chkWakeLock"> Pantalla ON
-    </label>
+    <div class="status" id="statusText">Esperando inicio...</div>
 
     <script>
-        let ctx, source, gainNode, pannerNode, analyserNode, compressorNode;
-        let bassFilter, midFilter, trebleFilter;
-        let mediaRecorder, destStream;
-        let chunks = [];
+        let ctx, source, gainNode, analyser, compressor, trebleFilter;
         let isOn = false;
-        let isRecording = false;
-        let wakeLock = null;
         let animationId;
-        
-        // Configuración de Sample Rate (El arreglo del borracho)
-        let currentSampleRate = 0; // 0 = Automático, 44100, 48000
 
         const canvas = document.getElementById('visualizer');
         const canvasCtx = canvas.getContext('2d');
-        const hzDisplay = document.getElementById('hzDisplay');
-
-        const silentAudio = new Audio("data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==");
-        silentAudio.loop = true;
-
-        const PRESETS = {
-            'general': { vol: 2, bass: 0, mid: 0, treble: -2 },
-            'voz':     { vol: 5, bass: -12, mid: 8, treble: 2 },
-            'cine':    { vol: 4, bass: 6, mid: 0, treble: 4 },
-            'calle':   { vol: 6, bass: -15, mid: 5, treble: 5 }
-        };
-
+        const container = document.querySelector('.viz-container');
+        
         const btn = document.getElementById('btnPower');
-        const btnRec = document.getElementById('btnRec');
-        const chkWakeLock = document.getElementById('chkWakeLock');
-        const chkCompressor = document.getElementById('chkCompressor');
+        const volControl = document.getElementById('volControl');
+        const trebleControl = document.getElementById('trebleControl');
+        const volText = document.getElementById('volText');
+        const statusText = document.getElementById('statusText');
+        const compLed = document.getElementById('compLed');
 
-        const ui = {
-            vol: document.getElementById('volControl'),
-            bal: document.getElementById('balControl'),
-            bass: document.getElementById('bassControl'),
-            mid: document.getElementById('midControl'),
-            treble: document.getElementById('trebleControl'),
-            volVal: document.getElementById('volVal')
-        };
-
-        // Arreglar tamaño del canvas
-        function fixCanvasSize() {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+        // Ajustar Canvas
+        function resizeCanvas() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
         }
-
-        // --- FUNCIÓN MÁGICA PARA REPARAR AUDIO ---
-        function toggleSampleRate() {
-            if(isOn) btn.click(); // Apagar primero
-            
-            if (currentSampleRate === 0) {
-                currentSampleRate = 48000;
-                alert("Cambiando a Modo 48kHz (Toca ON de nuevo)");
-            } else if (currentSampleRate === 48000) {
-                currentSampleRate = 44100;
-                alert("Cambiando a Modo 44.1kHz (Toca ON de nuevo)");
-            } else {
-                currentSampleRate = 0;
-                alert("Cambiando a Modo Automático (Toca ON de nuevo)");
-            }
-            hzDisplay.innerText = "Modo seleccionado: " + (currentSampleRate || "Auto");
-        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
         btn.addEventListener('click', async () => {
             if (!isOn) {
                 try {
-                    silentAudio.play();
-                    fixCanvasSize(); // Arreglar visualizador al encender
-
+                    // 1. Contexto de Audio LIMPIO (Sin forzar sampleRate)
+                    // Dejamos que el navegador elija la velocidad nativa del celular
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    ctx = new AudioContext({ latencyHint: 'interactive' });
                     
-                    // APLICAR PARCHE DE AUDIO BORRACHO
-                    let options = { latencyHint: 'interactive' };
-                    if (currentSampleRate > 0) {
-                        options.sampleRate = currentSampleRate;
-                    }
-                    ctx = new AudioContext(options);
-                    
-                    hzDisplay.innerText = `Frecuencia Activa: ${ctx.sampleRate}Hz`;
+                    statusText.innerText = "Frecuencia Nativa: " + ctx.sampleRate + "Hz";
 
+                    // 2. Micrófono SIN PROCESAMIENTO EXTRA
+                    // A veces 'echoCancellation' causa el sonido robótico
                     const stream = await navigator.mediaDevices.getUserMedia({
                         audio: { 
                             echoCancellation: false, 
@@ -191,89 +115,62 @@
                     });
 
                     source = ctx.createMediaStreamSource(stream);
+
+                    // 3. Cadena Simple: EQ -> Volumen -> Compresor -> Analizador -> Salida
+                    trebleFilter = ctx.createBiquadFilter();
+                    trebleFilter.type = "highshelf";
+                    trebleFilter.frequency.value = 3000;
                     
-                    // Nodos
-                    bassFilter = ctx.createBiquadFilter(); bassFilter.type = "lowshelf"; bassFilter.frequency.value = 250; 
-                    midFilter = ctx.createBiquadFilter(); midFilter.type = "peaking"; midFilter.frequency.value = 1500; midFilter.Q.value = 1;
-                    trebleFilter = ctx.createBiquadFilter(); trebleFilter.type = "highshelf"; trebleFilter.frequency.value = 3000;
-                    
-                    pannerNode = ctx.createStereoPanner();
                     gainNode = ctx.createGain();
-
-                    compressorNode = ctx.createDynamicsCompressor();
-                    compressorNode.threshold.value = -30;
-                    compressorNode.ratio.value = 12;
-
-                    analyserNode = ctx.createAnalyser();
-                    analyserNode.fftSize = 2048;
-
-                    destStream = ctx.createMediaStreamDestination();
-
-                    // Conexiones
-                    source.connect(bassFilter);
-                    bassFilter.connect(midFilter);
-                    midFilter.connect(trebleFilter);
-                    trebleFilter.connect(pannerNode);
-                    pannerNode.connect(gainNode);
                     
-                    updateChain(); // Conectar compresor/salida
+                    compressor = ctx.createDynamicsCompressor();
+                    compressor.threshold.value = -30;
+                    compressor.ratio.value = 12;
 
-                    updateAudioSystem();
-                    toggleWakeLock();
-                    drawVisualizer(); // INICIAR ANIMACIÓN
+                    analyser = ctx.createAnalyser();
+                    analyser.fftSize = 2048;
 
+                    source.connect(trebleFilter);
+                    trebleFilter.connect(gainNode);
+                    gainNode.connect(compressor);
+                    compressor.connect(analyser);
+                    analyser.connect(ctx.destination);
+
+                    drawVisualizer();
+                    monitorCompressor();
+                    
                     isOn = true;
                     btn.innerText = "ON";
                     btn.classList.add('on');
-                } catch (e) { alert("Error: " + e.message); }
+
+                } catch (e) {
+                    alert("Error: " + e.message);
+                    statusText.innerText = "Error: " + e.message;
+                }
             } else {
-                stopAll();
+                if(ctx) ctx.close();
+                cancelAnimationFrame(animationId);
+                isOn = false;
+                btn.innerText = "OFF";
+                btn.classList.remove('on');
+                // Limpiar visualizador
+                canvasCtx.clearRect(0,0,canvas.width, canvas.height);
+                compLed.classList.remove('active');
             }
         });
 
-        function updateChain() {
-            if(!ctx) return;
-            gainNode.disconnect();
-            compressorNode.disconnect();
-            analyserNode.disconnect();
-
-            let last = gainNode;
-            if(chkCompressor.checked) {
-                last.connect(compressorNode);
-                last = compressorNode;
-            }
-            last.connect(analyserNode);
-            analyserNode.connect(ctx.destination);
-            analyserNode.connect(destStream);
-        }
-
-        chkCompressor.addEventListener('change', updateChain);
-
-        function stopAll() {
-            if (ctx) ctx.close();
-            silentAudio.pause();
-            cancelAnimationFrame(animationId);
-            isOn = false;
-            btn.innerText = "OFF";
-            btn.classList.remove('on');
-            // Limpiar visualizador
-            canvasCtx.fillStyle = "#000";
-            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        // --- VISUALIZADOR ARREGLADO ---
         function drawVisualizer() {
             if(!isOn) return;
             animationId = requestAnimationFrame(drawVisualizer);
 
-            const bufferLength = analyserNode.frequencyBinCount;
+            const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
-            analyserNode.getByteTimeDomainData(dataArray);
+            analyser.getByteTimeDomainData(dataArray);
 
-            canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+            canvasCtx.fillStyle = '#000';
             canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
             canvasCtx.lineWidth = 2;
-            canvasCtx.strokeStyle = 'rgb(0, 255, 0)'; // Verde Hacker
+            canvasCtx.strokeStyle = '#00d2ff';
             canvasCtx.beginPath();
 
             const sliceWidth = canvas.width * 1.0 / bufferLength;
@@ -282,66 +179,31 @@
             for(let i = 0; i < bufferLength; i++) {
                 const v = dataArray[i] / 128.0;
                 const y = v * canvas.height / 2;
-
                 if(i === 0) canvasCtx.moveTo(x, y);
                 else canvasCtx.lineTo(x, y);
-
                 x += sliceWidth;
             }
             canvasCtx.lineTo(canvas.width, canvas.height / 2);
             canvasCtx.stroke();
         }
 
-        // --- RESTO DE FUNCIONES (Presets, UI, Rec) ---
-        function updateAudioSystem() {
-            if (!isOn) return;
-            gainNode.gain.value = ui.vol.value;
-            ui.volVal.innerText = ui.vol.value;
-            pannerNode.pan.value = ui.bal.value;
-            bassFilter.gain.value = ui.bass.value;
-            midFilter.gain.value = ui.mid.value;
-            trebleFilter.gain.value = ui.treble.value;
-        }
-        
-        // Eventos inputs
-        [ui.vol, ui.bal, ui.bass, ui.mid, ui.treble].forEach(el => el.addEventListener('input', updateAudioSystem));
-
-        function loadPreset(name) {
-            const p = PRESETS[name];
-            ui.vol.value = p.vol; ui.bass.value = p.bass; ui.mid.value = p.mid; ui.treble.value = p.treble;
-            updateAudioSystem();
-            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-        }
-
-        btnRec.addEventListener('click', () => {
+        function monitorCompressor() {
             if(!isOn) return;
-            if(!isRecording) {
-                chunks = [];
-                mediaRecorder = new MediaRecorder(destStream.stream);
-                mediaRecorder.ondataavailable = e => chunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(chunks, { 'type' : 'audio/webm; codecs=opus' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = 'grabacion.webm';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                };
-                mediaRecorder.start();
-                isRecording = true;
-                btnRec.classList.add('recording');
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-                btnRec.classList.remove('recording');
-            }
+            const reduction = compressor.reduction; // valor negativo dB
+            // Si reduce más de 1dB, prender LED
+            if(reduction <= -1.0) compLed.classList.add('active');
+            else compLed.classList.remove('active');
+            requestAnimationFrame(monitorCompressor);
+        }
+
+        // Controles simples
+        volControl.addEventListener('input', () => {
+            if(gainNode) gainNode.gain.value = volControl.value;
+            volText.innerText = volControl.value;
         });
-        
-        async function toggleWakeLock() { if (chkWakeLock.checked && isOn && 'wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); else if(wakeLock) wakeLock.release(); }
-        chkWakeLock.addEventListener('change', toggleWakeLock);
+        trebleControl.addEventListener('input', () => {
+            if(trebleFilter) trebleFilter.gain.value = trebleControl.value;
+        });
 
     </script>
 </body>
