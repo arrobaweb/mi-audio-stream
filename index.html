@@ -3,133 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 16.0</title>
+    <title>Super Oído 17.0</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { 
             font-family: 'Segoe UI', sans-serif; text-align: center; 
-            background-color: #050505; color: #fff; 
+            background-color: #000; color: #fff; 
             padding: 15px; margin: 0; user-select: none;
             padding-bottom: 80px; -webkit-tap-highlight-color: transparent;
         }
-        h1 { 
-            color: #00ffcc; margin: 10px 0; font-size: 18px; 
-            text-transform: uppercase; letter-spacing: 2px;
-        }
+        h1 { color: #00ff00; margin: 10px 0; font-size: 18px; text-transform: uppercase; }
 
-        /* --- CORTINA MODO BOLSILLO (NUEVO) --- */
-        #pocketCurtain {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #000000; z-index: 9999;
-            display: none; /* Oculto por defecto */
-            align-items: center; justify-content: center;
-            flex-direction: column; touch-action: none;
+        /* --- VISUALIZADOR ULTRA SENSIBLE --- */
+        .meter-wrapper {
+            background: #111; border: 2px solid #333; border-radius: 8px;
+            padding: 5px; margin-bottom: 20px;
         }
-        .unlock-hint {
-            color: #333; font-size: 14px; margin-top: 20px;
-            animation: fade 3s infinite;
-        }
-        @keyframes fade { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.8; } }
-
-        /* VISUALIZADOR */
         .meter-container {
-            width: 100%; height: 30px; background: #111; border: 1px solid #333;
-            border-radius: 5px; margin-bottom: 20px; overflow: hidden;
+            width: 100%; height: 30px; 
+            background: #000; overflow: hidden; position: relative;
+            border-radius: 4px;
         }
         .meter-bar {
             width: 0%; height: 100%;
-            background: linear-gradient(90deg, #00ff00 60%, #ffff00 80%, #ff0000 100%);
-            transition: width 0.08s ease-out;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+            transition: width 0.05s linear; /* Súper rápido */
+            box-shadow: 0 0 20px rgba(0,255,0,0.4);
         }
+        #meterText { font-size: 12px; color: #888; margin-top: 5px; font-family: monospace; }
 
-        /* POWER BTN */
-        .main-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
+        /* CONTROLES */
+        .main-controls { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
         #btnPower {
-            width: 90px; height: 90px; border-radius: 50%; border: 3px solid #333;
-            background: #1a1a1a; color: #666; font-size: 16px; font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; transition: 0.3s;
+            width: 90px; height: 90px; border-radius: 50%; border: 4px solid #333;
+            background: #111; color: #555; font-size: 16px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
         }
         #btnPower.on { 
-            background: #00ffcc; color: #000; border-color: #fff; 
-            box-shadow: 0 0 30px #00ffcc; transform: scale(1.05);
+            background: #00ff00; color: #000; border-color: #fff; 
+            box-shadow: 0 0 40px #00ff00; transform: scale(1.05);
         }
         #btnRec {
             width: 50px; height: 50px; border-radius: 50%; border: 2px solid #333;
-            background: #1a1a1a; color: #cc0000; font-size: 20px; cursor: pointer;
+            background: #111; color: #cc0000; font-size: 20px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
         }
-        #btnRec.recording { background: #cc0000; color: #fff; animation: pulse 1s infinite; border-color: #fff; }
+        #btnRec.recording { background: #f00; color: #fff; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* BOTÓN BOLSILLO */
+        /* CORTINA MODO BOLSILLO */
+        #pocketCurtain {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
         #btnPocket {
             background: #222; border: 1px solid #444; color: #aaa;
-            padding: 15px; width: 100%; border-radius: 10px;
-            font-size: 14px; margin-bottom: 20px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 15px; width: 100%; border-radius: 10px; margin-bottom: 20px; cursor: pointer;
         }
-        
-        /* PRESETS Y PANELES */
-        .preset-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
-        .preset-btn { background: #1a1a1a; border: 1px solid #333; color: #888; padding: 10px 0; border-radius: 8px; font-size: 12px; }
-        .preset-btn.active { background: #00ffcc; color: #000; font-weight: bold; }
-        
-        .panel { background: #161616; border-radius: 12px; padding: 15px; margin-bottom: 10px; border: 1px solid #2a2a2a; }
-        .label-group { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #888;}
-        .label-val { color: #00ffcc; font-weight: bold; font-family: monospace; }
-        input[type=range] { width: 100%; height: 8px; border-radius: 5px; background: #333; outline: none; margin-bottom: 10px; accent-color: #00ffcc; }
-        
-        .footer { font-size: 11px; color: #555; margin-top: 20px; }
-        input[type=checkbox] { accent-color: #00ffcc; transform: scale(1.2); }
+
+        /* PANELES */
+        .panel { background: #1a1a1a; border-radius: 10px; padding: 15px; margin-bottom: 10px; border: 1px solid #333; }
+        input[type=range] { width: 100%; accent-color: #00ff00; margin-top:10px; }
+        .labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #aaa; }
+        .val { color: #00ff00; font-weight: bold; }
+
+        /* PRESETS */
+        .preset-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 20px; }
+        .preset-btn { background: #111; border: 1px solid #333; color: #666; padding: 10px; border-radius: 5px; }
+        .preset-btn.active { background: #00ff00; color: #000; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="pocketCurtain">
-        <div style="font-size: 40px;">🔒</div>
-        <div class="unlock-hint">Doble toque para desbloquear</div>
-        <div style="font-size: 10px; color: #222; margin-top: 50px;">Super Oído Activo</div>
+        <div style="font-size: 50px;">🔒</div>
+        <div style="color: #666; margin-top: 20px;">Doble toque para desbloquear</div>
     </div>
 
-    <h1>Super Oído 16.0</h1>
+    <h1>Super Oído 17.0</h1>
 
-    <div class="meter-container">
-        <div class="meter-bar" id="audioMeter"></div>
+    <div class="meter-wrapper">
+        <div class="meter-container">
+            <div class="meter-bar" id="audioMeter"></div>
+        </div>
+        <div id="meterText">Nivel de Entrada: 0</div>
     </div>
 
     <div class="main-controls">
         <div id="btnPower">OFF</div>
         <div id="btnRec">●</div>
     </div>
-    
-    <button id="btnPocket" onclick="enablePocketMode()">
-        🌑 ACTIVAR MODO BOLSILLO
-        <br><span style="font-size: 10px;">(Toca aquí antes de guardar el cel)</span>
-    </button>
+
+    <button id="btnPocket" onclick="enablePocketMode()">🌑 MODO BOLSILLO</button>
 
     <div class="preset-container">
-        <button class="preset-btn active" onclick="loadPreset('general')">General</button>
-        <button class="preset-btn" onclick="loadPreset('voz')">🗣️ Voz</button>
-        <button class="preset-btn" onclick="loadPreset('cine')">🎬 Cine</button>
-        <button class="preset-btn" onclick="loadPreset('calle')">🚦 Calle</button>
+        <button class="preset-btn active" onclick="loadPreset('general')">Gral</button>
+        <button class="preset-btn" onclick="loadPreset('voz')">Voz</button>
+        <button class="preset-btn" onclick="loadPreset('cine')">Cine</button>
+        <button class="preset-btn" onclick="loadPreset('calle')">Calle</button>
     </div>
 
     <div class="panel">
-        <div class="label-group"><span>VOLUMEN</span><span class="label-val" id="volVal">1.0x</span></div>
+        <div class="labels"><span>Volumen</span><span class="val" id="volVal">1.0x</span></div>
         <input type="range" id="volControl" min="1" max="30" step="0.5" value="1">
-        <div class="label-group" style="margin-top:10px;"><span>BALANCE</span></div>
+        <div class="labels" style="margin-top:10px;"><span>Balance</span></div>
         <input type="range" id="balControl" min="-1" max="1" step="0.1" value="0">
     </div>
 
     <div class="panel">
-        <div class="label-group"><span>EQ (Bajos / Medios / Agudos)</span></div>
+        <div class="labels"><span>EQ (Bajos / Medios / Agudos)</span></div>
         <input type="range" id="bassControl" min="-20" max="20" step="1" value="0">
         <input type="range" id="midControl" min="-20" max="20" step="1" value="0">
         <input type="range" id="trebleControl" min="-20" max="20" step="1" value="0">
     </div>
 
-    <div class="footer">
-        <label><input type="checkbox" id="chkCompressor" checked> 🛡️ Compresor</label>
-    </div>
+    <label style="color:#666; font-size:12px;">
+        <input type="checkbox" id="chkCompressor" checked> 🛡️ Compresor Activo
+    </label>
 
     <script>
         let ctx, source, gainNode, pannerNode, analyser, compressor;
@@ -141,42 +132,20 @@
         let wakeLock = null;
         let animationId;
 
-        // --- SISTEMA MODO BOLSILLO ---
+        // UI Elements
+        const btn = document.getElementById('btnPower');
+        const btnRec = document.getElementById('btnRec');
+        const audioMeter = document.getElementById('audioMeter');
+        const meterText = document.getElementById('meterText');
         const pocketCurtain = document.getElementById('pocketCurtain');
-        let lastTap = 0;
+        const chkCompressor = document.getElementById('chkCompressor');
 
-        async function enablePocketMode() {
-            if(!isOn) return alert("Enciende primero el audio.");
-            
-            // 1. Pedir WakeLock (Mantener pantalla encendida)
-            try {
-                if ('wakeLock' in navigator) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                }
-            } catch (err) { console.log(err); }
+        const ui = {
+            vol: document.getElementById('volControl'), volVal: document.getElementById('volVal'),
+            bal: document.getElementById('balControl'),
+            bass: document.getElementById('bassControl'), mid: document.getElementById('midControl'), treble: document.getElementById('trebleControl')
+        };
 
-            // 2. Mostrar cortina negra
-            pocketCurtain.style.display = 'flex';
-            
-            // 3. Poner pantalla completa (si el navegador deja)
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch((e)=>{});
-            }
-        }
-
-        // Detector de Doble Tap para salir
-        pocketCurtain.addEventListener('click', (e) => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            if (tapLength < 500 && tapLength > 0) {
-                // DOBLE TAP DETECTADO
-                pocketCurtain.style.display = 'none';
-                if (document.exitFullscreen) document.exitFullscreen().catch((e)=>{});
-            }
-            lastTap = currentTime;
-        });
-
-        // --- AUDIO ENGINE ---
         const PRESETS = {
             'general': { vol: 2, bass: 0, mid: 0, treble: -2 },
             'voz':     { vol: 5, bass: -12, mid: 8, treble: 2 },
@@ -184,22 +153,12 @@
             'calle':   { vol: 6, bass: -15, mid: 5, treble: 5 }
         };
 
-        const btn = document.getElementById('btnPower');
-        const btnRec = document.getElementById('btnRec');
-        const audioMeter = document.getElementById('audioMeter');
-        const chkCompressor = document.getElementById('chkCompressor');
-        const ui = {
-            vol: document.getElementById('volControl'), volVal: document.getElementById('volVal'),
-            bal: document.getElementById('balControl'),
-            bass: document.getElementById('bassControl'), mid: document.getElementById('midControl'), treble: document.getElementById('trebleControl')
-        };
-
+        // Cargar Memoria
         window.addEventListener('load', () => {
-            const saved = localStorage.getItem('superOido16_Settings');
+            const saved = localStorage.getItem('superOido17_Settings');
             if (saved) {
                 const config = JSON.parse(saved);
-                applyConfigToUI(config);
-                if(config.lastPreset) highlightButton(config.lastPreset);
+                applyConfig(config);
             }
         });
 
@@ -208,9 +167,17 @@
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     ctx = new AudioContext({ latencyHint: 'interactive' });
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
                     
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+
                     source = ctx.createMediaStreamSource(stream);
+                    
+                    // --- ANALIZADOR (Conectado DIRECTO al Micrófono) ---
+                    analyser = ctx.createAnalyser();
+                    analyser.fftSize = 256; 
+                    source.connect(analyser); // Cable A: Visual
+
+                    // --- AUDIO (Cable B: Oídos) ---
                     bassFilter = ctx.createBiquadFilter(); bassFilter.type = "lowshelf"; bassFilter.frequency.value = 250; 
                     midFilter = ctx.createBiquadFilter(); midFilter.type = "peaking"; midFilter.frequency.value = 1500; midFilter.Q.value = 1;
                     trebleFilter = ctx.createBiquadFilter(); trebleFilter.type = "highshelf"; trebleFilter.frequency.value = 3000;
@@ -218,64 +185,89 @@
                     gainNode = ctx.createGain();
                     compressor = ctx.createDynamicsCompressor();
                     compressor.threshold.value = -30; compressor.ratio.value = 12;
-                    analyser = ctx.createAnalyser(); analyser.fftSize = 256; analyser.smoothingTimeConstant = 0.5;
+
                     destStream = ctx.createMediaStreamDestination();
 
-                    source.connect(bassFilter); bassFilter.connect(midFilter); midFilter.connect(trebleFilter);
+                    // Cadena de Audio
+                    source.connect(bassFilter);
+                    bassFilter.connect(midFilter); midFilter.connect(trebleFilter);
                     trebleFilter.connect(pannerNode); pannerNode.connect(gainNode);
                     
-                    connectChain();
-                    gainNode.connect(analyser);
+                    updateChain(); // Compresor y Salida
 
-                    updateAudio();
-                    drawMeter();
+                    updateValues();
+                    drawMeter(); // Iniciar Loop Visual
+                    
                     isOn = true;
-                    btn.innerText = "ON";
-                    btn.classList.add('on');
+                    btn.innerText = "ON"; btn.classList.add('on');
+                    
+                    // Activar WakeLock automático si es posible
+                    try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
+
                 } catch (e) { alert("Error: " + e.message); }
             } else {
-                if (ctx) ctx.close();
-                if (isRecording) stopRec();
-                cancelAnimationFrame(animationId);
-                if(wakeLock) wakeLock.release();
-                isOn = false;
-                btn.innerText = "OFF";
-                btn.classList.remove('on');
-                audioMeter.style.width = "0%";
+                stopAll();
             }
         });
 
-        function connectChain() {
+        function updateChain() {
             if(!ctx) return;
             gainNode.disconnect(); compressor.disconnect();
-            if(chkCompressor.checked) { gainNode.connect(compressor); compressor.connect(ctx.destination); compressor.connect(destStream); }
-            else { gainNode.connect(ctx.destination); gainNode.connect(destStream); }
-            gainNode.connect(analyser);
+            if(chkCompressor.checked) {
+                gainNode.connect(compressor);
+                compressor.connect(ctx.destination); compressor.connect(destStream);
+            } else {
+                gainNode.connect(ctx.destination); gainNode.connect(destStream);
+            }
         }
 
+        // --- MATEMÁTICA DE VOLUMEN (RMS) ---
         function drawMeter() {
             if(!isOn) return;
             animationId = requestAnimationFrame(drawMeter);
+
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
-            let sum = 0; for(let i=0; i<bufferLength; i++) sum += dataArray[i];
-            let percent = (sum / bufferLength) * 2.5; 
-            if(percent > 100) percent = 100;
-            audioMeter.style.width = percent + "%";
+            
+            // Usamos TimeDomain (Onda) en vez de Frecuencia para calcular volumen real
+            analyser.getByteTimeDomainData(dataArray);
+
+            let sum = 0;
+            for(let i = 0; i < bufferLength; i++) {
+                // Convertir de 0-255 a -1 a +1
+                let x = (dataArray[i] - 128) / 128.0;
+                sum += x * x;
+            }
+            // Raíz cuadrada del promedio (RMS)
+            let rms = Math.sqrt(sum / bufferLength);
+            
+            // Multiplicamos para que se vea bien (Sensibilidad)
+            let volume = rms * 400; 
+            if(volume > 100) volume = 100;
+            if(volume < 0) volume = 0;
+
+            // Debug Numérico
+            meterText.innerText = "Nivel de Entrada: " + Math.round(volume);
+
+            // Pintar Barra
+            audioMeter.style.width = volume + "%";
         }
 
-        function updateAudio() {
-            ui.volVal.innerText = ui.vol.value + "x";
-            if(!isOn) return;
-            gainNode.gain.value = ui.vol.value; pannerNode.pan.value = ui.bal.value;
-            bassFilter.gain.value = ui.bass.value; midFilter.gain.value = ui.mid.value; trebleFilter.gain.value = ui.treble.value;
+        function stopAll() {
+            if(ctx) ctx.close();
+            if(isRecording) stopRec();
+            cancelAnimationFrame(animationId);
+            if(wakeLock) wakeLock.release();
+            isOn = false; btn.innerText = "OFF"; btn.classList.remove('on');
+            audioMeter.style.width = "0%";
+            meterText.innerText = "Nivel de Entrada: 0";
         }
 
+        // --- PRESETS & UI ---
         function loadPreset(name) {
             const p = PRESETS[name];
             ui.vol.value = p.vol; ui.bass.value = p.bass; ui.mid.value = p.mid; ui.treble.value = p.treble;
-            updateAudio(); highlightButton(name); saveToMemory(name);
+            updateValues(); highlightButton(name); saveSettings(name);
         }
         function highlightButton(name) {
             document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -283,22 +275,27 @@
             const btns = document.querySelectorAll('.preset-btn');
             if(btns[map[name]]) btns[map[name]].classList.add('active');
         }
-        function saveToMemory(presetName) {
-            const config = {
-                vol: ui.vol.value, bal: ui.bal.value, bass: ui.bass.value, mid: ui.mid.value, treble: ui.treble.value,
-                lastPreset: presetName || 'custom', compressor: chkCompressor.checked
-            };
-            localStorage.setItem('superOido16_Settings', JSON.stringify(config));
+        function updateValues() {
+            ui.volVal.innerText = ui.vol.value + "x";
+            if(!isOn) return;
+            gainNode.gain.value = ui.vol.value; pannerNode.pan.value = ui.bal.value;
+            bassFilter.gain.value = ui.bass.value; midFilter.gain.value = ui.mid.value; trebleFilter.gain.value = ui.treble.value;
         }
-        function applyConfigToUI(config) {
-            ui.vol.value = config.vol; ui.bal.value = config.bal || 0;
-            ui.bass.value = config.bass; ui.mid.value = config.mid; ui.treble.value = config.treble;
-            updateAudio();
+        function saveSettings(name) {
+            const cfg = { vol: ui.vol.value, bal: ui.bal.value, bass: ui.bass.value, mid: ui.mid.value, treble: ui.treble.value, last: name || 'custom', comp: chkCompressor.checked };
+            localStorage.setItem('superOido17_Settings', JSON.stringify(cfg));
+        }
+        function applyConfig(cfg) {
+            ui.vol.value = cfg.vol; ui.bal.value = cfg.bal; ui.bass.value = cfg.bass; ui.mid.value = cfg.mid; ui.treble.value = cfg.treble;
+            if(cfg.last) highlightButton(cfg.last);
+            chkCompressor.checked = cfg.comp;
+            updateValues();
         }
 
-        [ui.vol, ui.bal, ui.bass, ui.mid, ui.treble].forEach(el => el.addEventListener('input', () => { updateAudio(); saveToMemory(null); highlightButton(null); }));
-        chkCompressor.addEventListener('change', () => { connectChain(); saveToMemory(null); });
+        [ui.vol, ui.bal, ui.bass, ui.mid, ui.treble].forEach(el => el.addEventListener('input', () => { updateValues(); saveSettings(); highlightButton(null); }));
+        chkCompressor.addEventListener('change', () => { updateChain(); saveSettings(); });
 
+        // --- GRABADORA ---
         btnRec.addEventListener('click', () => {
             if(!isOn) return;
             if(!isRecording) {
@@ -309,15 +306,29 @@
                     const blob = new Blob(chunks, { 'type' : 'audio/webm; codecs=opus' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.style.display='none'; a.href=url;
-                    const d = new Date(); a.download = `SuperOido_${d.getHours()}-${d.getMinutes()}.webm`; 
+                    const d = new Date(); a.download = `Audio_${d.getHours()}-${d.getMinutes()}.webm`; 
                     document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
                 };
                 mediaRecorder.start(); isRecording = true; btnRec.classList.add('recording');
             } else {
-                if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+                if(mediaRecorder) mediaRecorder.stop();
                 isRecording = false; btnRec.classList.remove('recording');
             }
         });
+
+        // --- MODO BOLSILLO ---
+        let lastTap = 0;
+        function enablePocketMode() {
+            if(!isOn) return alert("Enciende primero el audio.");
+            pocketCurtain.style.display = 'flex';
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+        }
+        pocketCurtain.addEventListener('click', () => {
+            const now = new Date().getTime();
+            if (now - lastTap < 500) { pocketCurtain.style.display = 'none'; if (document.exitFullscreen) document.exitFullscreen().catch(()=>{}); }
+            lastTap = now;
+        });
+
     </script>
 </body>
 </html>
