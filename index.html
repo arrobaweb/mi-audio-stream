@@ -3,25 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Oído 18.0 BT</title>
+    <title>Super Oído 19.0 BT</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body { 
             font-family: 'Segoe UI', sans-serif; text-align: center; 
-            background-color: #000; color: #fff; 
+            background-color: #050505; color: #fff; 
             padding: 15px; margin: 0; user-select: none;
             padding-bottom: 80px; -webkit-tap-highlight-color: transparent;
         }
         h1 { color: #0088ff; margin: 10px 0; font-size: 18px; text-transform: uppercase; }
 
-        /* --- SELECTOR DE BLUETOOTH (NUEVO) --- */
-        .device-selector {
-            width: 100%; padding: 10px; margin-bottom: 15px;
-            background: #111; color: #0088ff; border: 1px solid #333;
-            border-radius: 8px; font-size: 14px; outline: none;
-        }
-
-        /* --- VISUALIZADOR --- */
+        /* VISUALIZADOR */
         .meter-wrapper {
             background: #111; border: 2px solid #333; border-radius: 8px;
             padding: 5px; margin-bottom: 20px;
@@ -58,7 +51,7 @@
         #btnRec.recording { background: #f00; color: #fff; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* CORTINA MODO BOLSILLO */
+        /* MODO BOLSILLO */
         #pocketCurtain {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 9999; display: none;
@@ -75,7 +68,6 @@
         .labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #aaa; }
         .val { color: #0088ff; font-weight: bold; }
 
-        /* PRESETS */
         .preset-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 20px; }
         .preset-btn { background: #111; border: 1px solid #333; color: #666; padding: 10px; border-radius: 5px; }
         .preset-btn.active { background: #0088ff; color: #fff; font-weight: bold; }
@@ -83,18 +75,14 @@
 </head>
 <body>
 
-    <audio id="audioOutputElement" autoplay style="display:none;"></audio>
+    <audio id="audioOutputElement" autoplay playsinline style="display:none;"></audio>
 
     <div id="pocketCurtain">
         <div style="font-size: 50px;">🔒</div>
         <div style="color: #666; margin-top: 20px;">Doble toque para desbloquear</div>
     </div>
 
-    <h1>Super Oído 18.0 Bluetooth</h1>
-
-    <select id="audioOutputSelect" class="device-selector">
-        <option value="" disabled selected>🔊 Toca para elegir Salida...</option>
-    </select>
+    <h1>Super Oído 19.0</h1>
 
     <div class="meter-wrapper">
         <div class="meter-container">
@@ -145,14 +133,12 @@
         let wakeLock = null;
         let animationId;
 
-        // UI Elements
         const btn = document.getElementById('btnPower');
         const btnRec = document.getElementById('btnRec');
         const audioMeter = document.getElementById('audioMeter');
         const meterText = document.getElementById('meterText');
         const pocketCurtain = document.getElementById('pocketCurtain');
         const chkCompressor = document.getElementById('chkCompressor');
-        const outputSelect = document.getElementById('audioOutputSelect');
         const audioOutputElement = document.getElementById('audioOutputElement');
 
         const ui = {
@@ -168,51 +154,8 @@
             'calle':   { vol: 6, bass: -15, mid: 5, treble: 5 }
         };
 
-        // --- GESTIÓN DE DISPOSITIVOS DE AUDIO ---
-        async function getAudioDevices() {
-            try {
-                // Necesitamos permiso primero para ver los nombres
-                if (!isOn) return; 
-
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
-                
-                outputSelect.innerHTML = '<option value="" disabled selected>🔊 Toca para elegir Salida...</option>';
-                
-                // Si el navegador no soporta selección de salida (ej. iOS Safari)
-                if (audioOutputs.length === 0) {
-                     outputSelect.innerHTML = '<option disabled>Selección no soportada por el navegador</option>';
-                     return;
-                }
-
-                audioOutputs.forEach(device => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    option.text = device.label || `Altavoz/Auricular ${outputSelect.length}`;
-                    outputSelect.appendChild(option);
-                });
-
-                // Escuchar cambios
-                outputSelect.onchange = async () => {
-                    const deviceId = outputSelect.value;
-                    if (typeof audioOutputElement.setSinkId !== 'undefined') {
-                        try {
-                            await audioOutputElement.setSinkId(deviceId);
-                            alert(`Audio redirigido a: ${outputSelect.options[outputSelect.selectedIndex].text}`);
-                        } catch (error) {
-                            alert('Error al cambiar salida: ' + error);
-                        }
-                    } else {
-                        alert("Tu navegador no soporta cambiar la salida de audio por software.");
-                    }
-                };
-            } catch (err) {
-                console.log("Error listando dispositivos:", err);
-            }
-        }
-
         window.addEventListener('load', () => {
-            const saved = localStorage.getItem('superOido18_Settings');
+            const saved = localStorage.getItem('superOido19_Settings');
             if (saved) {
                 const config = JSON.parse(saved);
                 applyConfig(config);
@@ -229,14 +172,9 @@
                         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
                     });
 
-                    // 1. CARGAR LISTA DE DISPOSITIVOS (Ahora que tenemos permiso)
-                    getAudioDevices();
-
                     source = ctx.createMediaStreamSource(stream);
-                    
-                    analyser = ctx.createAnalyser();
-                    analyser.fftSize = 256; 
-                    source.connect(analyser); 
+                    analyser = ctx.createAnalyser(); analyser.fftSize = 256; 
+                    source.connect(analyser); // Visualizador directo al micro
 
                     bassFilter = ctx.createBiquadFilter(); bassFilter.type = "lowshelf"; bassFilter.frequency.value = 250; 
                     midFilter = ctx.createBiquadFilter(); midFilter.type = "peaking"; midFilter.frequency.value = 1500; midFilter.Q.value = 1;
@@ -246,7 +184,8 @@
                     compressor = ctx.createDynamicsCompressor();
                     compressor.threshold.value = -30; compressor.ratio.value = 12;
 
-                    destStream = ctx.createMediaStreamDestination();
+                    destStream = ctx.createMediaStreamDestination(); // Para grabar
+                    outputStreamNode = ctx.createMediaStreamDestination(); // Para escuchar (Bluetooth)
 
                     // Cadena de Audio
                     source.connect(bassFilter);
@@ -255,16 +194,7 @@
                     
                     updateChain(); 
 
-                    // --- TRUCO BLUETOOTH ---
-                    // En lugar de enviar solo a ctx.destination, enviamos a un elemento <audio>
-                    // que podemos controlar con setSinkId
-                    outputStreamNode = ctx.createMediaStreamDestination();
-                    
-                    // Conectamos el final de la cadena a este nodo especial
-                    if(chkCompressor.checked) compressor.connect(outputStreamNode);
-                    else gainNode.connect(outputStreamNode);
-
-                    // Conectamos el nodo especial al elemento HTML <audio> invisible
+                    // ENLAZAR AL ALTAVOZ (Esto permite que Android maneje el BT)
                     audioOutputElement.srcObject = outputStreamNode.stream;
                     audioOutputElement.play();
 
@@ -273,7 +203,6 @@
                     
                     isOn = true;
                     btn.innerText = "ON"; btn.classList.add('on');
-                    
                     try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
 
                 } catch (e) { alert("Error: " + e.message); }
@@ -286,13 +215,14 @@
             if(!ctx) return;
             gainNode.disconnect(); compressor.disconnect();
             
-            // Ruta normal (Grabadora y Analisis)
+            // Si compresor activo
             if(chkCompressor.checked) {
                 gainNode.connect(compressor);
-                compressor.connect(destStream); // Para grabadora
-                // Nota: La salida al altavoz va por outputStreamNode en btn.click
+                compressor.connect(outputStreamNode); // Salida audio
+                compressor.connect(destStream); // Grabacion
             } else {
-                gainNode.connect(destStream);
+                gainNode.connect(outputStreamNode); // Salida audio
+                gainNode.connect(destStream); // Grabacion
             }
         }
 
@@ -309,8 +239,7 @@
             }
             let rms = Math.sqrt(sum / bufferLength);
             let volume = rms * 400; 
-            if(volume > 100) volume = 100;
-            if(volume < 0) volume = 0;
+            if(volume > 100) volume = 100; if(volume < 0) volume = 0;
             meterText.innerText = "Nivel de Entrada: " + Math.round(volume);
             audioMeter.style.width = volume + "%";
         }
@@ -320,16 +249,10 @@
             if(isRecording) stopRec();
             cancelAnimationFrame(animationId);
             if(wakeLock) wakeLock.release();
-            
-            // Parar el elemento de audio bluetooth
             audioOutputElement.srcObject = null;
-            
             isOn = false; btn.innerText = "OFF"; btn.classList.remove('on');
             audioMeter.style.width = "0%";
             meterText.innerText = "Nivel de Entrada: 0";
-            
-            // Limpiar selector
-            outputSelect.innerHTML = '<option value="" disabled selected>🔊 Toca para elegir Salida...</option>';
         }
 
         // --- PRESETS & UI ---
@@ -352,7 +275,7 @@
         }
         function saveSettings(name) {
             const cfg = { vol: ui.vol.value, bal: ui.bal.value, bass: ui.bass.value, mid: ui.mid.value, treble: ui.treble.value, last: name || 'custom', comp: chkCompressor.checked };
-            localStorage.setItem('superOido18_Settings', JSON.stringify(cfg));
+            localStorage.setItem('superOido19_Settings', JSON.stringify(cfg));
         }
         function applyConfig(cfg) {
             ui.vol.value = cfg.vol; ui.bal.value = cfg.bal; ui.bass.value = cfg.bass; ui.mid.value = cfg.mid; ui.treble.value = cfg.treble;
@@ -360,23 +283,8 @@
             chkCompressor.checked = cfg.comp;
             updateValues();
         }
-
         [ui.vol, ui.bal, ui.bass, ui.mid, ui.treble].forEach(el => el.addEventListener('input', () => { updateValues(); saveSettings(); highlightButton(null); }));
-        chkCompressor.addEventListener('change', () => { 
-            // Reiniciar conexión para aplicar cambio de compresor a la salida bluetooth
-            if(isOn) {
-                gainNode.disconnect(); compressor.disconnect();
-                if(chkCompressor.checked) {
-                     gainNode.connect(compressor);
-                     compressor.connect(outputStreamNode);
-                     compressor.connect(destStream);
-                } else {
-                     gainNode.connect(outputStreamNode);
-                     gainNode.connect(destStream);
-                }
-            }
-            saveSettings(); 
-        });
+        chkCompressor.addEventListener('change', () => { updateChain(); saveSettings(); });
 
         // --- GRABADORA ---
         btnRec.addEventListener('click', () => {
